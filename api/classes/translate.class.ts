@@ -1,6 +1,6 @@
 import axios from "axios";
 import { URLSearchParams } from "url";
-import * as types from "../types";
+import * as types from "../../types";
 
 export class Translate {
   private detectApiUri: string =
@@ -14,14 +14,16 @@ export class Translate {
     let resultText = "";
     let result;
     let words = text.split(".");
-    let cursorPos = 0;
+
+    console.log(words);
 
     if (words.length > 3) {
-      while (cursorPos < words.length) {
-        const slicedWords = words.splice(0, cursorPos + 3);
-        result = await this.translate(slicedWords.join("."), to);
-        resultText += result.text;
-        cursorPos = cursorPos + 3;
+      while (words.length > 0) {
+        const slicedWord = words.shift();
+        if (slicedWord && slicedWord !== "") {
+          result = await this.translate(slicedWord.trim() + ". ", to);
+          resultText += result.text;
+        }
       }
     } else {
       result = await this.translate(text, to);
