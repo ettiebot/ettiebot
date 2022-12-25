@@ -51,28 +51,28 @@ export class TelegramBot {
       async () => {
         console.log("started");
 
-        await ctx.sendChatAction("typing");
-        const {
-          sourceLang: questionLang,
-          text: [questionEn],
-        } = await self.translate.translate(question, "en");
+        // await ctx.sendChatAction("typing");
+        // const {
+        //   sourceLang: questionLang,
+        //   text: [questionEn],
+        // } = await self.translate.translate(question, "en");
 
         await ctx.sendChatAction("typing");
-        const answer = await self.mainAPI.askQuestion(questionEn, history);
+        const answer = await self.mainAPI.askQuestion(question, history);
 
-        await ctx.sendChatAction("typing");
-        const {
-          text: [answerInSrcLang],
-        } = await self.translate.translateLongText(answer.text, questionLang);
+        // await ctx.sendChatAction("typing");
+        // const {
+        //   text: [answerInSrcLang],
+        // } = await self.translate.translateLongText(answer.text, questionLang);
 
-        await ctx.reply(answerInSrcLang, {
+        await ctx.reply(answer.text, {
           reply_to_message_id: messageId,
         });
 
         self.db.push({
           key: dbHistoryKey,
           value: {
-            question: questionEn,
+            question: question,
             answer: answer.text,
           },
         });
