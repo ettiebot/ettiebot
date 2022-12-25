@@ -12,7 +12,9 @@ export class TelegramBot {
   private servicesApi = new ServicesApi();
   private translate: Translate = new Translate();
   private queue = fastq.promise<any, TelegramTaskQueue, void>(this._queue, 3);
-  private db = new Database("history.yaml");
+  private db = new Database("history.yaml", {
+    encryption: { password: process.env.HISTORY_ENC_PASSWORD ?? "ettie" },
+  });
 
   constructor(token: string) {
     this.db.on("ready", () => console.log("Database Ready!"));
@@ -46,6 +48,8 @@ export class TelegramBot {
       console.error(e);
       throw e;
     }
+
+    if (history.length > 2) self.db.shift(dbHistoryKey);
 
     await retry(
       async () => {
