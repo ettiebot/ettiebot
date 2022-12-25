@@ -1,15 +1,15 @@
 import { Context, Telegraf } from "telegraf";
 import { retry } from "ts-retry-promise";
 import fastq from "fastq";
-import * as API from "../../api";
 import { Translate } from "../../api";
 import { DETECT_NAME_REGEXP } from "../../api/const";
 import { DbStructure, TelegramTaskQueue, TgTriggerContext } from "../../types";
 import { Database } from "st.db";
+import { ServicesApi } from "../../services/api";
 
 export class TelegramBot {
   private bot: Telegraf;
-  private mainAPI: API.Main = new API.Main();
+  private servicesApi = new ServicesApi();
   private translate: Translate = new Translate();
   private queue = fastq.promise<any, TelegramTaskQueue, void>(this._queue, 3);
   private db = new Database("history.yaml");
@@ -58,7 +58,8 @@ export class TelegramBot {
         // } = await self.translate.translate(question, "en");
 
         await ctx.sendChatAction("typing");
-        const answer = await self.mainAPI.askQuestion(question, history);
+        const answer = await self.servicesApi.requestAnswer(question, history);
+        // const answer = await self.mainAPI.askQuestion(question, history);
 
         // await ctx.sendChatAction("typing");
         // const {
