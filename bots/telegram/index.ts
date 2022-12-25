@@ -90,7 +90,7 @@ export class TelegramBot {
 
         await ctx.reply(answerInSrcLang, {
           reply_to_message_id: messageId,
-          ...Markup.keyboard([goOnBtnText]),
+          ...Markup.keyboard([goOnBtnText]).resize(true).oneTime(true),
         });
 
         self.db.push({
