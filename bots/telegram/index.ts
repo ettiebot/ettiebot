@@ -1,9 +1,15 @@
 import { Context, Telegraf } from "telegraf";
+import { Markup } from "telegraf";
 import { retry } from "ts-retry-promise";
 import fastq from "fastq";
 import { Translate } from "../../api";
 import { DETECT_NAME_REGEXP } from "../../api/const";
-import { DbStructure, TelegramTaskQueue, TgTriggerContext } from "../../types";
+import {
+  DbStructure,
+  TelegramTaskQueue,
+  TgActionContext,
+  TgTriggerContext,
+} from "../../types";
 import { Database } from "st.db";
 import { ServicesApi } from "../../services/api";
 
@@ -28,16 +34,20 @@ export class TelegramBot {
     this.bot.launch();
   }
 
+  private _getHistoryKey(ctx: TgTriggerContext | TgActionContext) {
+    const chatKey = ctx.chat.id;
+    const historyKey = ctx.from.id;
+    const dbHistoryKey = chatKey + "." + historyKey;
+    return dbHistoryKey;
+  }
+
   private async _queue({
     ctx,
     question,
     id: messageId,
     self,
   }: TelegramTaskQueue) {
-    const chatKey = ctx.message.chat.id;
-    const historyKey = ctx.message.from.id;
-    const dbHistoryKey = chatKey + "." + historyKey;
-    console.log("retry", historyKey);
+    const dbHistoryKey = self._getHistoryKey(ctx);
 
     let history;
     try {
@@ -55,29 +65,38 @@ export class TelegramBot {
       async () => {
         console.log("started");
 
-        // await ctx.sendChatAction("typing");
-        // const {
-        //   sourceLang: questionLang,
-        //   text: [questionEn],
-        // } = await self.translate.translate(question, "en");
+        await ctx.sendChatAction("typing");
+        const {
+          sourceLang: lang,
+          text: [questionEn],
+        } = await self.translate.translate(question, "en");
+        await ctx.sendChatAction("typing");
 
         await ctx.sendChatAction("typing");
-        const answer = await self.servicesApi.requestAnswer(question, history);
-        // const answer = await self.mainAPI.askQuestion(question, history);
+        const answer = await self.servicesApi.requestAnswer(
+          questionEn,
+          history
+        );
 
-        // await ctx.sendChatAction("typing");
-        // const {
-        //   text: [answerInSrcLang],
-        // } = await self.translate.translateLongText(answer.text, questionLang);
+        await ctx.sendChatAction("typing");
+        const {
+          text: [answerInSrcLang],
+        } = await self.translate.translateLongText(answer.text, lang);
 
-        await ctx.reply(answer.text, {
+        await ctx.sendChatAction("typing");
+        const {
+          text: [goOnBtnText],
+        } = await self.translate.translate("Keep going", lang);
+
+        await ctx.reply(answerInSrcLang, {
           reply_to_message_id: messageId,
+          ...Markup.keyboard([goOnBtnText]),
         });
 
         self.db.push({
           key: dbHistoryKey,
           value: {
-            question: question,
+            question: questionEn,
             answer: answer.text,
           },
         });

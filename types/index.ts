@@ -6,6 +6,7 @@ export {
   TgMsgContext,
   TgTriggerContext,
   TgCleanMsgContext,
+  TgActionContext,
 } from "./TgContext.type";
 export { TelegramTaskQueue } from "./TelegramTaskQueue.type";
 export { DbStructure } from "./DbStructure.type";

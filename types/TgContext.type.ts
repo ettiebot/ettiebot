@@ -1,5 +1,9 @@
 import { Context, NarrowedContext } from "telegraf";
-import { Update, Message } from "telegraf/typings/core/types/typegram";
+import {
+  Update,
+  Message,
+  CallbackQuery,
+} from "telegraf/typings/core/types/typegram";
 
 export type TgMsgContext =
   | NarrowedContext<
@@ -29,4 +33,11 @@ export type TgTriggerContext = NarrowedContext<
 export type TgCleanMsgContext = NarrowedContext<
   Context<Update>,
   Update.MessageUpdate<Message>
+>;
+
+export type TgActionContext = NarrowedContext<
+  Context<Update> & {
+    match: RegExpExecArray;
+  },
+  Update.CallbackQueryUpdate<CallbackQuery>
 >;

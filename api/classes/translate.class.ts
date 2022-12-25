@@ -55,7 +55,7 @@ export class Translate {
     return { sourceLang, ...res };
   }
 
-  private async detectLang(text: string) {
+  public async detectLang(text: string) {
     const { data: res } = await axios.get<types.YandexTranslateDetectRes>(
       this.detectApiUri.replace("{t}", text.substring(0, 100)),
       {

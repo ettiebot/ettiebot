@@ -1,8 +1,8 @@
 import { TelegramBot } from "../bots/telegram";
-import { TgTriggerContext } from "./TgContext.type";
+import { TgActionContext, TgTriggerContext } from "./TgContext.type";
 
 export interface TelegramTaskQueue {
-  ctx: TgTriggerContext;
+  ctx: TgTriggerContext | TgActionContext;
   question: string;
   id: number;
   self: TelegramBot;
