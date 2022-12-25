@@ -31,7 +31,11 @@ export class Main {
 
       const serpResults = clearedRespArr.find((e) => e.serp_results);
       const tokens = clearedRespArr.filter((e) => e.token);
-      const text = tokens.map((t) => t.token).join("");
+      const text = tokens
+        .map((t) => t.token)
+        .join("")
+        .replace(/\(([^)]+)\)/g, "")
+        .replace(/\[[^\]]*\]]/g, "");
 
       return {
         serpResults,
