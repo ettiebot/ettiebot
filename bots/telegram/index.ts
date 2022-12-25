@@ -99,7 +99,12 @@ export class TelegramBot {
 
   private async onMessage(ctx: TgTriggerContext) {
     const replyData = ctx.message.reply_to_message;
-    if (!replyData || replyData.from.username !== "ettiebot") return;
+    if (
+      !replyData ||
+      replyData.from.username !== "ettiebot" ||
+      !ctx.message.text
+    )
+      return;
 
     this.queue.push({
       ctx,
