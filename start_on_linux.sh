@@ -1,1 +1,1 @@
-xvfb-run --auto-servernum ts-node --max-old-space-size=4096 index.ts
+xvfb-run --auto-servernum NODE_OPTIONS='--max-old-space-size=8192' ts-node index.ts
