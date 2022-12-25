@@ -13,15 +13,13 @@ export class Translate {
   public async translateLongText(text: string, to: string) {
     let resultText = "";
     let result;
-    let words = text.split(".");
-
-    console.log(words);
+    let words = text.split("\n");
 
     if (words.length > 3) {
       while (words.length > 0) {
-        const slicedWord = words.shift();
+        const slicedWord = words.shift()?.replace("\n", "").trim();
         if (slicedWord && slicedWord !== "") {
-          result = await this.translate(slicedWord.trim() + ". ", to);
+          result = await this.translate(slicedWord + "\n", to);
           resultText += result.text;
         }
       }
