@@ -101,7 +101,7 @@ export class TelegramBot {
     const replyData = ctx.message.reply_to_message;
     if (
       !replyData ||
-      replyData.from.username !== "ettiebot" ||
+      replyData.from.username !== process.env.TELEGRAM_BOT_USERNAME ||
       !ctx.message.text
     )
       return;
