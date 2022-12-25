@@ -1,2 +1,1 @@
-# sudo apt-get install xvfb
-xvfb-run --auto-servernum ts-node index.ts
+xvfb-run --auto-servernum ts-node --max-old-space-size=4096 index.ts
