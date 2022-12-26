@@ -1,1 +1,1 @@
-NODE_OPTIONS='--max-old-space-size=8192' xvfb-run --auto-servernum ts-node runWorker.ts
+NODE_OPTIONS='--max-old-space-size=8192' xvfb-run --auto-servernum ts-node --esm runWorker.ts

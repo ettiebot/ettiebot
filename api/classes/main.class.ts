@@ -1,7 +1,7 @@
 import fastq from "fastq";
-import { QueueContext } from "../../types";
-import { MainClassExecRes } from "../../types/MainClassExecRes.type";
-import { Puppeteer } from "./pptr.class";
+import { ChatGPTAPIBrowser } from "chatgpt";
+import { QueueContext } from "../../types/index.js";
+import { MainClassExecRes } from "../../types/MainClassExecRes.type.js";
 
 interface clearedRes {
   token: string;
@@ -9,59 +9,48 @@ interface clearedRes {
 }
 
 export class Main {
-  private client: Puppeteer = new Puppeteer();
+  private client: ChatGPTAPIBrowser = new ChatGPTAPIBrowser({
+    email: process.env.OPENAI_EMAIL,
+    password: process.env.OPENAI_PASSWORD,
+    isGoogleLogin: true,
+  });
+
   private queue = fastq.promise<
     any,
-    { uri: string; self: Main },
+    { question: string; self: Main },
     MainClassExecRes
   >(this._exec, 3);
-  private youChatStreamingUrl: string =
-    "https://you.com/api/youchatStreaming?question={q}&chat={h}";
+
+  constructor() {
+    this._init();
+  }
+
+  private async _init() {
+    await this.client.initSession();
+  }
 
   public async askQuestion(
     question: QueueContext["question"],
     history?: QueueContext["history"]
   ) {
-    const uri = this.youChatStreamingUrl
-      .replace("{q}", encodeURIComponent(question))
-      .replace("{h}", encodeURIComponent(JSON.stringify(history)));
-
-    return await this.queue.push({ uri, self: this });
+    return await this.queue.push({ question, self: this });
   }
 
   private async _exec({
-    uri,
+    question,
     self,
   }: {
-    uri: string;
+    question: string;
     self: Main;
   }): Promise<MainClassExecRes> {
     try {
-      const response = await self.client.get(uri);
-      const unclearedArr = response.split("data: ");
-      const clearedRespArr = unclearedArr.map((uncJson) => {
-        try {
-          return JSON.parse(uncJson.substring(0, uncJson.indexOf("\n")));
-        } catch (_) {
-          return {};
-        }
-      });
-
-      const serpResults = clearedRespArr.find(
-        (e: clearedRes) => e.serp_results
-      );
-      const tokens = clearedRespArr.filter((e: clearedRes) => e.token);
-      const text = tokens
-        .map((e: clearedRes) => e.token)
-        .join("")
-        .replace(/\(([^)]+)\)/g, "")
-        .replace(/\[[^\]]*\]]/g, "");
+      const result = await self.client.sendMessage(question);
 
       return {
-        serpResults,
-        text: text.trim(),
+        text: result.response,
       };
     } catch (e) {
+      console.error(e);
       throw e;
     }
   }

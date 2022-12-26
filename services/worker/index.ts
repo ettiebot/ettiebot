@@ -1,13 +1,13 @@
 import Translink from "@coryfoundation/translink";
-import { QueueContext } from "../../types";
-import * as API from "../../api";
+import { QueueContext } from "../../types/index.js";
+import * as API from "../../api/index.js";
 
 export class WorkerService {
   private mainAPI: API.Main = new API.Main();
 
-  private bridge = new Translink({
+  private bridge = new Translink.default({
     namespace: String(process.env.NETWORK_ID),
-    requestTimeout: 60000,
+    requestTimeout: 200000,
     log: true,
     logger: console,
   });

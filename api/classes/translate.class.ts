@@ -1,6 +1,6 @@
 import axios from "axios";
 import { URLSearchParams } from "url";
-import * as types from "../../types";
+import * as types from "../../types/index.js";
 
 export class Translate {
   private detectApiUri: string =

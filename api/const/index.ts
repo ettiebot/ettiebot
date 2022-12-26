@@ -1,1 +1,1 @@
-export { DETECT_NAME_REGEXP } from "./detectNameRegexp.const";
+export { DETECT_NAME_REGEXP } from "./detectNameRegexp.const.js";

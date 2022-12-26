@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { TelegramBot } from "./bots/telegram";
+import { TelegramBot } from "./bots/telegram/index.js";
 
 process.setMaxListeners(0);
 

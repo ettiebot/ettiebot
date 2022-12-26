@@ -5,8 +5,8 @@
     "removeComments": false,
     "sourceMap": true,
     "esModuleInterop": true,
-    "target": "es5",
-    "outDir": "dist"
+    "outDir": "dist",
+    "module": "NodeNext"
   },
   "include": [
     "**/*"
