@@ -18,9 +18,7 @@ export class TelegramBot {
   private servicesApi = new ServicesApi();
   private translate: Translate = new Translate();
   private queue = fastq.promise<any, TelegramTaskQueue, void>(this._queue, 3);
-  private db = new Database("history.yaml", {
-    encryption: { password: process.env.HISTORY_ENC_PASSWORD ?? "ettie" },
-  });
+  private db = new Database("history.yaml");
 
   constructor(token: string) {
     this.db.on("ready", () => console.log("Database Ready!"));
@@ -31,6 +29,7 @@ export class TelegramBot {
       this.onTriggered(ctx)
     );
     this.bot.on("message", (ctx: any) => this.onMessage(ctx));
+    this.bot.action("goOn", async (ctx) => this.onGoOnClick(ctx));
     this.bot.launch();
   }
 
@@ -90,7 +89,10 @@ export class TelegramBot {
 
         await ctx.reply(answerInSrcLang, {
           reply_to_message_id: messageId,
-          ...Markup.keyboard([goOnBtnText]).resize(true).oneTime(true),
+          ...Markup.inlineKeyboard([
+            Markup.button.callback(goOnBtnText, "goOn"),
+          ]),
+          //...Markup.removeKeyboard(),
         });
 
         self.db.push({
@@ -134,6 +136,27 @@ export class TelegramBot {
       ctx,
       question: ctx.message.text.trim(),
       id: ctx.message.message_id,
+      self: this,
+    });
+  }
+
+  private async onGoOnClick(ctx: TgActionContext) {
+    await ctx.answerCbQuery("OK");
+
+    const history = this.db.get({ key: this._getHistoryKey(ctx) });
+    const lastHistoryItem = history[history.length - 1];
+    console.log(history);
+
+    const { lang } = await this.translate.detectLang(lastHistoryItem.question);
+
+    const {
+      text: [goOnBtnText],
+    } = await this.translate.translate("Keep going", lang);
+
+    this.queue.push({
+      ctx,
+      question: goOnBtnText,
+      id: undefined,
       self: this,
     });
   }
