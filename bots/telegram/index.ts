@@ -144,6 +144,7 @@ export class TelegramBot {
     await ctx.answerCbQuery("OK");
 
     const history = this.db.get({ key: this._getHistoryKey(ctx) });
+    if (!history) return;
     const lastHistoryItem = history[history.length - 1];
     console.log(history);
 
