@@ -13,13 +13,13 @@ export class Translate {
   public async translateLongText(text: string, to: string) {
     let resultText = "";
     let result;
-    let words = text.split("\n");
+    let words = text.split(". ");
 
     if (words.length > 3) {
       while (words.length > 0) {
-        const slicedWord = words.shift()?.replace("\n", "").trim();
+        const slicedWord = words.shift()?.trim();
         if (slicedWord && slicedWord !== "") {
-          result = await this.translate(slicedWord + "\n", to);
+          result = await this.translate(slicedWord + ". ", to);
           resultText += result.text;
         }
       }
@@ -54,7 +54,7 @@ export class Translate {
   }
 
   public async detectLang(text: string) {
-    const { data: res } = await axios.get<types.YandexTranslateDetectRes>(
+    let { data: res } = await axios.get<types.YandexTranslateDetectRes>(
       this.detectApiUri.replace("{t}", text.substring(0, 100)),
       {
         headers: {
@@ -63,6 +63,8 @@ export class Translate {
         },
       }
     );
+
+    if (!res || !res.lang) res = { code: 0, lang: "en" };
 
     return res;
   }

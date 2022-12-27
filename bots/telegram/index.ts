@@ -1,6 +1,7 @@
 import { Context, Telegraf } from "telegraf";
 import { Markup } from "telegraf";
 import { retry } from "ts-retry-promise";
+import RunParallel from "run-parallel";
 import fastq from "fastq";
 import { Translate } from "../../api";
 import { DETECT_NAME_REGEXP } from "../../api/const";
@@ -12,6 +13,7 @@ import {
 } from "../../types";
 import { Database } from "st.db";
 import { ServicesApi } from "../../services/api";
+import { sleep } from "../../api/utils";
 
 export class TelegramBot {
   private bot: Telegraf;
@@ -58,53 +60,92 @@ export class TelegramBot {
       throw e;
     }
 
-    if (history.length > 2) self.db.shift(dbHistoryKey);
+    if (JSON.stringify(history).length > 200) {
+      self.db.set(dbHistoryKey, []);
+      history = [];
+    }
 
-    await retry(
+    const btns = (answerInSrcLang: string, goOnBtnText: string) => {
+      if (answerInSrcLang.length < 100) return [];
+      else return [Markup.button.callback(goOnBtnText, "goOn")];
+    };
+
+    let done = false;
+
+    RunParallel([
       async () => {
-        console.log("started");
-
-        await ctx.sendChatAction("typing");
-        const {
-          sourceLang: lang,
-          text: [questionEn],
-        } = await self.translate.translate(question, "en");
-        await ctx.sendChatAction("typing");
-
-        await ctx.sendChatAction("typing");
-        const answer = await self.servicesApi.requestAnswer(
-          questionEn,
-          history
-        );
-
-        await ctx.sendChatAction("typing");
-        const {
-          text: [answerInSrcLang],
-        } = await self.translate.translateLongText(answer.text, lang);
-
-        await ctx.sendChatAction("typing");
-        const {
-          text: [goOnBtnText],
-        } = await self.translate.translate("Keep going", lang);
-
-        await ctx.reply(answerInSrcLang, {
-          reply_to_message_id: messageId,
-          ...Markup.inlineKeyboard([
-            Markup.button.callback(goOnBtnText, "goOn"),
-          ]),
-          //...Markup.removeKeyboard(),
-        });
-
-        self.db.push({
-          key: dbHistoryKey,
-          value: {
-            question: questionEn,
-            answer: answer.text,
+        await retry(
+          async () => {
+            if (!done) {
+              await ctx.sendChatAction("typing");
+              await sleep(2000);
+              throw new Error();
+            } else return true;
           },
+          { retries: 100 }
+        );
+      },
+      async (cb) => {
+        await retry(
+          async () => {
+            try {
+              console.log("started");
+
+              const {
+                sourceLang: lang,
+                text: [questionEn],
+              } = await self.translate.translate(question, "en");
+
+              const answer = await self.servicesApi.requestAnswer(
+                questionEn,
+                history
+              );
+
+              const {
+                text: [answerInSrcLang],
+              } = await self.translate.translateLongText(answer.text, lang);
+
+              const {
+                text: [goOnBtnText],
+              } = await self.translate.translate("Keep going", lang);
+
+              const btns = () => {
+                if (history.length === 0 || answerInSrcLang.length < 100)
+                  return [];
+                else return [Markup.button.callback(goOnBtnText, "goOn")];
+              };
+
+              await ctx.reply(answerInSrcLang, {
+                reply_to_message_id: messageId,
+                ...Markup.inlineKeyboard(btns()),
+                //...Markup.removeKeyboard(),
+              });
+
+              self.db.push({
+                key: dbHistoryKey,
+                value: {
+                  question: questionEn,
+                  answer: answer.text,
+                  lang,
+                },
+              });
+
+              done = true;
+
+              cb(null, true);
+            } catch (e) {
+              console.error(e);
+              throw e;
+            }
+          },
+          { retries: 3 }
+        ).catch((e) => {
+          done = true;
+          cb(e);
+          console.error(e);
         });
       },
-      { retries: 3 }
-    ).catch((err) => console.log(err));
+    ]);
   }
 
   private async onTriggered(ctx: TgTriggerContext) {
@@ -146,13 +187,12 @@ export class TelegramBot {
     const history = this.db.get({ key: this._getHistoryKey(ctx) });
     if (!history) return;
     const lastHistoryItem = history[history.length - 1];
+    if (!lastHistoryItem || !lastHistoryItem.lang) return;
     console.log(history);
-
-    const { lang } = await this.translate.detectLang(lastHistoryItem.question);
 
     const {
       text: [goOnBtnText],
-    } = await this.translate.translate("Keep going", lang);
+    } = await this.translate.translate("Keep going", lastHistoryItem.lang);
 
     this.queue.push({
       ctx,

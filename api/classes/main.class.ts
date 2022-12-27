@@ -37,29 +37,14 @@ export class Main {
     self: Main;
   }): Promise<MainClassExecRes> {
     try {
-      const response = await self.client.get(uri);
-      const unclearedArr = response.split("data: ");
-      const clearedRespArr = unclearedArr.map((uncJson) => {
-        try {
-          return JSON.parse(uncJson.substring(0, uncJson.indexOf("\n")));
-        } catch (_) {
-          return {};
-        }
-      });
-
-      const serpResults = clearedRespArr.find(
-        (e: clearedRes) => e.serp_results
-      );
-      const tokens = clearedRespArr.filter((e: clearedRes) => e.token);
-      const text = tokens
-        .map((e: clearedRes) => e.token)
-        .join("")
-        .replace(/\(([^)]+)\)/g, "")
-        .replace(/\[[^\]]*\]]/g, "");
+      const text = await self.client.get(uri);
 
       return {
-        serpResults,
-        text: text.trim(),
+        serpResults: [],
+        text: text
+          .trim()
+          .replace(/\(([^)]+)\)/g, "")
+          .replace(/\[[^\]]*\]]/g, ""),
       };
     } catch (e) {
       throw e;

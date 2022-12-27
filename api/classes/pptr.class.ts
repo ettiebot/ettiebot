@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer";
 
 function delay(time) {
   return new Promise(function (resolve) {
@@ -7,13 +7,24 @@ function delay(time) {
 }
 
 export class Puppeteer {
-  async get(uri: string) {
-    const browser = await puppeteer.launch({
+  browser: Browser;
+  page: Page;
+
+  constructor() {
+    this.start();
+  }
+
+  private async start() {
+    this.browser = await puppeteer.launch({
       headless: false,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
-    const page = await browser.newPage();
-    await page.goto(uri, {
+    await this.doCaptcha();
+  }
+
+  private async doCaptcha() {
+    const page = await this.browser.newPage();
+    await page.goto("https://you.com/api", {
       waitUntil: "networkidle0",
     });
 
@@ -52,18 +63,38 @@ export class Puppeteer {
       }
     })();
 
-    await page.waitForSelector("pre", { timeout: 15000 });
-    await page.waitForFunction(
-      'document.querySelector("pre").textContent.indexOf("event: done") !== -1'
-    );
+    this.page = page;
+  }
 
-    const content = await (
-      await page.$("pre")
-    ).evaluate((el) => el.textContent);
-    console.log(content);
+  async get(uri: string) {
+    console.info("GET", uri);
+    const data: any = await this.page.evaluate((uri) => {
+      return new Promise((resolve, reject) => {
+        let data = "";
+        const es = new EventSource(uri);
+        const rejectTimer = setTimeout(
+          () => reject(new Error("timeout")),
+          30000
+        );
+        es.addEventListener("token", (e) => {
+          try {
+            console.log(e.data);
+            data += JSON.parse(e.data).token;
+          } catch (e) {
+            reject(e);
+          }
+        });
+        es.addEventListener("done", () => {
+          console.info("DONE");
+          clearTimeout(rejectTimer);
+          es.close();
+          resolve(data);
+        });
+      });
+    }, uri);
 
-    await browser.close();
+    console.info("RESOLVED", data);
 
-    return content;
+    return data;
   }
 }
