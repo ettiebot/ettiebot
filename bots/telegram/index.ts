@@ -91,7 +91,10 @@ export class TelegramBot {
 
               const answer = await self.servicesApi.requestAnswer(
                 questionEn,
-                history
+                history.filter(({ question, answer }) => ({
+                  question,
+                  answer,
+                }))
               );
 
               const {
