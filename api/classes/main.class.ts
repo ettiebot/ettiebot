@@ -22,6 +22,11 @@ export class Main {
     question: QueueContext["question"],
     history?: QueueContext["history"]
   ) {
+    history = history.map(({ question, answer }) => ({
+      question,
+      answer,
+    }));
+
     const uri = this.youChatStreamingUrl
       .replace("{q}", encodeURIComponent(question))
       .replace("{h}", encodeURIComponent(JSON.stringify(history)));
