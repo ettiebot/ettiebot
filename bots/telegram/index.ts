@@ -52,23 +52,16 @@ export class TelegramBot {
 
     let history;
     try {
-      history = self.db.get({ key: dbHistoryKey }) ?? [];
-      if (history.length === 0) self.db.set({ key: dbHistoryKey, value: [] });
+      history = self.db.get({ key: dbHistoryKey });
+      if (!history) {
+        history = [];
+        self.db.set({ key: dbHistoryKey, value: history });
+      } else history = history.slice(-3);
       console.log(history);
     } catch (e) {
       console.error(e);
       throw e;
     }
-
-    if (JSON.stringify(history).length > 200) {
-      self.db.set(dbHistoryKey, []);
-      history = [];
-    }
-
-    const btns = (answerInSrcLang: string, goOnBtnText: string) => {
-      if (answerInSrcLang.length < 100) return [];
-      else return [Markup.button.callback(goOnBtnText, "goOn")];
-    };
 
     let done = false;
 
@@ -110,7 +103,7 @@ export class TelegramBot {
               } = await self.translate.translate("Keep going", lang);
 
               const btns = () => {
-                if (history.length === 0 || answerInSrcLang.length < 100)
+                if (history.length < 1 || answerInSrcLang.length < 100)
                   return [];
                 else return [Markup.button.callback(goOnBtnText, "goOn")];
               };
