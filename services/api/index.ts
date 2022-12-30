@@ -22,7 +22,7 @@ export class ServicesApi {
     question: string,
     history: QueueContext["history"]
   ) {
-    return await this.bridge.get("pptr.retreive", {
+    return await this.bridge.get("ettie.io/ask", {
       question,
       history,
     });

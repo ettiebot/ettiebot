@@ -14,7 +14,7 @@ export class WorkerService {
 
   constructor() {
     console.log(String(process.env.NETWORK_ID));
-    this.bridge.subscribeReq("pptr.retreive", async (data) =>
+    this.bridge.subscribeReq("ettie.io/ask", async (data) =>
       this.onRetreiveRequest(data)
     );
     this._connect();
