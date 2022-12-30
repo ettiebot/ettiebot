@@ -7,7 +7,7 @@ export class WorkerService {
 
   private bridge = new Translink({
     namespace: String(process.env.NETWORK_ID),
-    requestTimeout: 60000,
+    requestTimeout: 180000,
     log: true,
     logger: console,
   });
