@@ -32,7 +32,7 @@ export class TelegramBot {
     );
     this.bot.on("message", (ctx: any) => this.onMessage(ctx));
     this.bot.action("goOn", async (ctx) => this.onGoOnClick(ctx));
-    this.bot.launch();
+    this.bot.launch().then(() => console.info("Bot has been started"));
   }
 
   private _getHistoryKey(ctx: TgTriggerContext | TgActionContext) {

@@ -1,4 +1,5 @@
 import Translink from "@coryfoundation/translink";
+import deasync from "deasync";
 import { QueueContext } from "../../types";
 
 export class ServicesApi {
@@ -13,8 +14,10 @@ export class ServicesApi {
     this._connect();
   }
 
-  private async _connect() {
-    await this.bridge.connect();
+  private _connect() {
+    let done = false;
+    this.bridge.connect().then(() => (done = true));
+    while (done === false) deasync.sleep(100);
     console.info("[API Service] Connected to bridge");
   }
 

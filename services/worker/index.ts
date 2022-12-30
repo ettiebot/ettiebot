@@ -1,4 +1,5 @@
 import Translink from "@coryfoundation/translink";
+import deasync from "deasync";
 import { QueueContext } from "../../types";
 import * as API from "../../api";
 
@@ -13,15 +14,16 @@ export class WorkerService {
   });
 
   constructor() {
-    console.log(String(process.env.NETWORK_ID));
     this.bridge.subscribeReq("ettie.io/ask", async (data) =>
       this.onRetreiveRequest(data)
     );
     this._connect();
   }
 
-  private async _connect() {
-    await this.bridge.connect();
+  private _connect() {
+    let done = false;
+    this.bridge.connect().then(() => (done = true));
+    while (done === false) deasync.sleep(100);
     console.info("[Worker Service] Connected to bridge");
   }
 
