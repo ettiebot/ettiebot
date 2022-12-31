@@ -16,16 +16,19 @@ export class Browser {
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-features=site-per-process",
-        "--no-first-run",
-        "--disable-blink-features=AutomationControlled",
-        "--disable-component-extensions-with-background-pages",
-        "--disable-default-apps",
-        "--disable-extensions",
-        "--disable-features=Translate",
-        "--disable-sync",
-        "--user-data-dir=" + getAppDataPath("ettiebot"),
+        // "--disable-features=site-per-process",
+        // "--no-first-run",
+        // "--disable-blink-features=AutomationControlled",
+        // "--disable-component-extensions-with-background-pages",
+        // "--disable-default-apps",
+        // "--disable-extensions",
+        // "--disable-features=Translate",
+        // "--disable-sync",
+        // "--user-data-dir=" + getAppDataPath("ettiebot"),
       ],
+      env: {
+        DISPLAY: ":10.0",
+      },
     });
     await this.doCaptcha();
     console.info("Browser has been started");
