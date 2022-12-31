@@ -16,7 +16,15 @@ export class Browser {
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        // "--user-data-dir=" + getAppDataPath("ettiebot"),
+        "--disable-features=site-per-process",
+        "--no-first-run",
+        "--disable-blink-features=AutomationControlled",
+        "--disable-component-extensions-with-background-pages",
+        "--disable-default-apps",
+        "--disable-extensions",
+        "--disable-features=Translate",
+        "--disable-sync",
+        "--user-data-dir=" + getAppDataPath("ettiebot"),
       ],
     });
     await this.doCaptcha();

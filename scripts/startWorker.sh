@@ -1,1 +1,1 @@
-NODE_OPTIONS='--max-old-space-size=8192' xvfb-run --auto-servernum ts-node worker/index.ts
+NODE_OPTIONS='--max-old-space-size=8192' xvfb-run --auto-servernum --server-num=1 --server-args='-screen 0, 900x600' ts-node worker/index.ts
