@@ -10,7 +10,7 @@ const browser = new Browser();
 const translate = new Translate();
 const worker = new Worker(network, browser, translate);
 
-export async function start() {
+(async () => {
   // Start the browser
   await browser.start();
 
@@ -26,4 +26,4 @@ export async function start() {
 
   // Connect to the network
   await network.start();
-}
+})();
