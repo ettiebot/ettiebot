@@ -7,12 +7,13 @@ import Worker from "./worker";
 
 const browser = new Browser();
 const translate = new Translate();
-const network = new Network();
-const worker = new Worker(network, browser, translate);
 
 (async () => {
   // Start the browser
   await browser.start();
+
+  const network = new Network();
+  const worker = new Worker(network, browser, translate);
 
   // Subscribe to request
   network.client.subscribeReq(
