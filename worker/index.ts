@@ -10,7 +10,7 @@ const browser = new Browser();
 const translate = new Translate();
 const worker = new Worker(network, browser, translate);
 
-setImmediate(async () => {
+setTimeout(async () => {
   // Start the browser
   await browser.start();
 
@@ -26,4 +26,4 @@ setImmediate(async () => {
 
   // Connect to the network
   await network.start();
-});
+}, 3000);
