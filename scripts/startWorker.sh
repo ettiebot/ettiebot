@@ -1,1 +1,1 @@
-export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2; exit;}'):0.0 && NODE_OPTIONS='--max-old-space-size=8192' xvfb-run --auto-servernum ts-node worker/index.ts
+NODE_OPTIONS='--max-old-space-size=8192' xvfb-run --server-num=0.0  --error-file=/tmp/Xvfb-errors.log export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2; exit;}'):0.0 && ts-node worker/index.ts
