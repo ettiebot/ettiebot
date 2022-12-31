@@ -1,4 +1,4 @@
-import * as p from "puppeteer";
+import puppeteer, * as p from "puppeteer";
 import getAppDataPath from "appdata-path";
 import { delay } from "../utils/index";
 import { BrowserGetMethodResponse } from "./types";
@@ -11,12 +11,9 @@ export class Browser {
    * Starts the browser
    */
   public async start() {
-    this.browser = await p.launch({
-      executablePath: "/usr/bin/google-chrome",
+    this.browser = await puppeteer.launch({
       headless: false,
-      args: [
-        "--no-sandbox" /**"--user-data-dir=" + getAppDataPath("ettiebot") */,
-      ],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     await this.doCaptcha();
     console.info("Browser has been started");
