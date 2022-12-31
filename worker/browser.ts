@@ -16,7 +16,7 @@ export class Browser {
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--user-data-dir=" + getAppDataPath("ettiebot"),
+        //"--user-data-dir=" + getAppDataPath("ettiebot"),
       ],
     });
     await this.doCaptcha();
