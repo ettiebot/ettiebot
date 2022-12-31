@@ -2,7 +2,7 @@ import Translink from "@coryfoundation/translink";
 import EventEmitter from "events";
 import { NETWORK_ID } from "./env";
 
-export class Network extends EventEmitter {
+export class Network {
   public client = new Translink({
     namespace: NETWORK_ID,
     waitForPeer: false,

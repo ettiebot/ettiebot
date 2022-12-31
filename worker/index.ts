@@ -10,8 +10,10 @@ const browser = new Browser();
 const translate = new Translate();
 const worker = new Worker(network, browser, translate);
 
-// Start the browser
-browser.start().then(async () => {
+(async () => {
+  // Start the browser
+  await browser.start();
+
   // Subscribe to request
   network.client.subscribeReq(
     "ettie.io/ask",
@@ -24,4 +26,4 @@ browser.start().then(async () => {
 
   // Connect to the network
   await network.start();
-});
+})();
