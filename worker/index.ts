@@ -5,9 +5,9 @@ import { Network } from "./network";
 import { NetworkAskMethodPayload } from "../shared/types";
 import Worker from "./worker";
 
-const network = new Network();
 const browser = new Browser();
 const translate = new Translate();
+const network = new Network();
 const worker = new Worker(network, browser, translate);
 
 (async () => {

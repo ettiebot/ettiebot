@@ -2,12 +2,16 @@ import Translink from "@coryfoundation/translink";
 import { NETWORK_ID } from "./env";
 
 export class Network {
-  public client = new Translink({
-    namespace: NETWORK_ID,
-    waitForPeer: false,
-    requestTimeout: 180000,
-    log: true,
-  });
+  public client: Translink;
+
+  constructor() {
+    this.client = new Translink({
+      namespace: NETWORK_ID,
+      waitForPeer: false,
+      requestTimeout: 180000,
+      log: true,
+    });
+  }
 
   /**
    * Initialize network class
