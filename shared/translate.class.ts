@@ -6,9 +6,9 @@ import {
 
 export class Translate {
   private detectApiUri: string =
-    "https://translate.yandex.net/api/v1/tr.json/detect?sid=a270fab9.63a7a839.1122323c.74722d74657874&srv=tr-text&text={t}&hint=en%2Cru&options=1&yu=1899689071670005913&yum=1671808977755971984";
+    "https://translate.yandex.net/api/v1/tr.json/detect?sid=df68040b.63b0f245.f1239894.74722d74657874&srv=tr-text&text={t}&hint=en%2Cru&options=1&yu=1899689071670005913&yum=1671808977755971984";
   private apiUri: string =
-    "https://translate.yandex.net/api/v1/tr.json/translate?id=a270fab9.63a7a839.1122323c.74722d74657874-0-0&srv=tr-text&source_lang={sl}&target_lang={tl}&reason=auto&format=text&ajax=1&yu=1899689071670005913&yum=1671808977755971984";
+    "https://translate.yandex.net/api/v1/tr.json/translate?id=df68040b.63b0f245.f1239894.74722d74657874-0-0&srv=tr-text&source_lang={sl}&target_lang={tl}&reason=auto&format=text&ajax=1&yu=1899689071670005913&yum=1671808977755971984";
   private userAgent: string =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36";
 
