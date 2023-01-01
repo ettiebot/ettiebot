@@ -1,8 +1,7 @@
 import parseEnv from "parse-dotenv";
 import { from } from "env-var";
 
-process.env = parseEnv();
-const env = from(process.env);
+const env = from(parseEnv());
 
 const NETWORK_ID = env.get("NETWORK_ID").required().asString();
 const YOUCHAT_API_URL = env

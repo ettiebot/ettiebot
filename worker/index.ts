@@ -5,15 +5,14 @@ import { Network } from "./network";
 import { NetworkAskMethodPayload } from "../shared/types";
 import Worker from "./worker";
 
+const network = new Network();
 const browser = new Browser();
 const translate = new Translate();
+const worker = new Worker(network, browser, translate);
 
-(async () => {
+setImmediate(async () => {
   // Start the browser
   await browser.start();
-
-  const network = new Network();
-  const worker = new Worker(network, browser, translate);
 
   // Subscribe to request
   network.client.subscribeReq(
@@ -27,4 +26,4 @@ const translate = new Translate();
 
   // Connect to the network
   await network.start();
-})();
+});
