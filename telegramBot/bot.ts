@@ -58,7 +58,7 @@ export default class TelegramBot {
     const { message } = ctx;
 
     // Check what message have a text
-    if (!message.text) return false;
+    if (!message.text || message.text.length > 150) return false;
 
     const matchRegexp = message.text.match(MENTION_PREDICT_REGEXP);
     const mentionPredict = matchRegexp
