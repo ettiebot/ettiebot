@@ -1,5 +1,5 @@
-import puppeteer, * as p from "puppeteer";
 import getAppDataPath from "appdata-path";
+import puppeteer, * as p from "puppeteer";
 import { delay } from "../utils/index";
 import { BrowserGetMethodResponse } from "./types";
 
@@ -13,7 +13,11 @@ export class Browser {
   public async start() {
     this.browser = await puppeteer.launch({
       headless: false,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--user-data-dir=" + getAppDataPath("ettie"),
+      ],
     });
     await this.doCaptcha();
     console.info("Browser has been started");

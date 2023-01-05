@@ -10,7 +10,7 @@ import { NETWORK_ID } from "./env";
 export class Network extends EventEmitter {
   public client = new Translink({
     namespace: NETWORK_ID,
-    waitForPeer: false,
+    waitForPeer: true,
     requestTimeout: 180000,
     log: true,
   });
