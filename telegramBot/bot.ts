@@ -118,15 +118,20 @@ export default class TelegramBot {
     }
 
     // Push a task to queue and retreive response
-    const job = await this.queue.add("tg", {
-      question,
-      ctx: {
-        chatId: ctx.chat.id,
-        userId: ctx.message.from.id,
-        messageId: ctx.message.message_id,
+    const job = await this.queue.add(
+      "tg",
+      {
+        question,
+        ctx: {
+          chatId: ctx.chat.id,
+          userId: ctx.message.from.id,
+          messageId: ctx.message.message_id,
+        },
       },
-    });
-    await job.changeDelay(5000);
+      {
+        delay: 3000,
+      }
+    );
     console.log("Queued");
 
     await job.waitUntilFinished(this.queueEvents);
