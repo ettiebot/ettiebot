@@ -1,4 +1,3 @@
-import fastq from "fastq";
 import Redis from "ioredis";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import RunParallel from "run-parallel";
@@ -17,6 +16,7 @@ import {
 import History from "./history";
 import { Network } from "./network";
 import { QueueTask, TypegramMessage } from "./types";
+import { Job, Queue, QueueEvents, Worker } from "bullmq";
 
 export default class TelegramBot {
   private network: Network;
@@ -31,16 +31,44 @@ export default class TelegramBot {
     duration: 5,
     storeClient: this.redisClient,
   });
-  private queue = fastq.promise<any, QueueTask, WorkerAskMethodResponse>(
-    this,
-    this._pullToQueue,
-    2
+  private queue = new Queue("tg", {
+    defaultJobOptions: {
+      removeOnComplete: false,
+    },
+    connection: this.redisClient,
+  });
+  private worker = new Worker(
+    "tg",
+    async (job) => await this._pullToQueue(job.data),
+    {
+      concurrency: 2,
+      runRetryDelay: 10000,
+      limiter: {
+        max: 2,
+        duration: 10000,
+      },
+    }
   );
+  private queueEvents = new QueueEvents("tg");
   private history = new History(this.redisClient);
+
+  public ownerChatId = 5430459394;
 
   constructor(network: Network, bot = new Telegraf(TELEGRAM_BOT_TOKEN)) {
     this.network = network;
     this.bot = bot;
+    this.worker.on("failed", (job: Job, error: Error) => {
+      console.error(job, error);
+      this.bot.telegram.sendMessage(
+        this.ownerChatId,
+        "error\nname:" +
+          error.name +
+          "\nmessage:" +
+          error.message +
+          "\nstack:" +
+          error.stack
+      );
+    });
   }
 
   async start() {
@@ -90,7 +118,28 @@ export default class TelegramBot {
     }
 
     // Push a task to queue and retreive response
-    const res = await this.queue.push({ question, ctx });
+    const job = await this.queue.add(
+      "tg",
+      {
+        question,
+        ctx: {
+          chatId: ctx.chat.id,
+          userId: ctx.message.from.id,
+          messageId: ctx.message.message_id,
+        },
+      },
+      {
+        delay: 3000,
+      }
+    );
+    console.log("Queued");
+
+    await job.waitUntilFinished(this.queueEvents);
+    console.log("Done", job.id);
+
+    const { returnvalue: res }: { returnvalue: WorkerAskMethodResponse } =
+      await Job.fromId(this.queue, job.id);
+
     // Push question to history
     await this.history.push(dialogKey, {
       question: res.question.questionEN,
@@ -102,7 +151,7 @@ export default class TelegramBot {
 
   private async writeReply(
     question: string,
-    ctx: TypegramMessage
+    ctx: QueueTask["ctx"]
   ): Promise<WorkerAskMethodResponse> {
     return await new TPromise((resolve, reject) => {
       let done = false;
@@ -112,7 +161,7 @@ export default class TelegramBot {
           await retry(
             async () => {
               if (!done) {
-                await ctx.sendChatAction("typing");
+                await this.bot.telegram.sendChatAction(ctx.chatId, "typing");
                 await delay(2000);
                 throw new Error();
               } else return true;
@@ -121,46 +170,39 @@ export default class TelegramBot {
           );
         },
         async (cb) => {
-          await retry(
-            async () => {
-              try {
-                console.log("started");
+          try {
+            console.log("started");
 
-                const response = await this.network.ask({
-                  question,
-                  history: [],
-                });
+            const response = await this.network.ask({
+              question,
+              history: [],
+            });
 
-                await ctx.reply(response.answer.text, {
-                  reply_to_message_id: ctx.message.message_id,
-                });
-
-                done = true;
-
-                cb(null, true);
-                resolve(response);
-                console.info("done");
-              } catch (e) {
-                console.error(e);
-                throw e;
+            await this.bot.telegram.sendMessage(
+              ctx.chatId,
+              response.answer.text,
+              {
+                reply_to_message_id: ctx.messageId,
               }
-            },
-            { retries: 3 }
-          ).catch((e) => {
+            );
+
             done = true;
-            cb(e);
+
+            cb(null, true);
+            resolve(response);
+            console.info("done");
+          } catch (e) {
             console.error(e);
-            reject(e);
-          });
+            throw e;
+          }
         },
       ]);
     });
   }
 
-  private async _pullToQueue({
-    question,
-    ctx,
-  }: QueueTask): Promise<WorkerAskMethodResponse> {
+  private async _pullToQueue(data: any): Promise<WorkerAskMethodResponse> {
+    const { question, ctx }: QueueTask = data;
+    console.log(data);
     return await this.writeReply(question, ctx);
   }
 }
