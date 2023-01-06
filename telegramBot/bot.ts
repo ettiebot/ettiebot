@@ -42,10 +42,10 @@ export default class TelegramBot {
     async (job) => await this._pullToQueue(job.data),
     {
       concurrency: 2,
-      runRetryDelay: 5000,
+      runRetryDelay: 10000,
       limiter: {
         max: 2,
-        duration: 6000,
+        duration: 10000,
       },
     }
   );
@@ -126,6 +126,7 @@ export default class TelegramBot {
         messageId: ctx.message.message_id,
       },
     });
+    await job.changeDelay(5000);
     console.log("Queued");
 
     await job.waitUntilFinished(this.queueEvents);
