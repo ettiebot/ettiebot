@@ -10,6 +10,8 @@
     "bullmq": "^3.5.2",
     "dotenv": "^16.0.3",
     "env-var": "^7.3.0",
+    "free-proxy": "^0.2.1",
+    "https-proxy-agent": "^5.0.1",
     "ioredis": "^5.2.4",
     "parse-dotenv": "^2.1.0",
     "puppeteer": "^19.4.1",

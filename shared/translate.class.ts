@@ -1,4 +1,6 @@
-import axios, { AxiosError } from "axios";
+import axios, { Axios, AxiosError } from "axios";
+import ProxyList from "free-proxy";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import randomUseragent from "random-useragent";
 import {
   YandexTranslateDetectResponse,
@@ -6,6 +8,8 @@ import {
 } from "./types";
 
 export class Translate {
+  private proxyList = new ProxyList();
+
   private detectApiUri: string =
     "https://translate.yandex.net/api/v1/tr.json/detect?sid=68f1f28b.63b83b34.90adbc31.74722d74657874&srv=tr-text&text={t}&hint=en%2Cru&options=1&yu=1899689071670005913&yum=1671808977755971984";
   private apiUri: string =
@@ -46,12 +50,34 @@ export class Translate {
     const url = this.apiUri.replace("{sl}", sourceLang).replace("{tl}", to);
     console.log(url);
 
-    const { data: res } = await axios.post<YandexTranslateResponse>(url, data, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": randomUseragent.getRandom(),
-      },
-    });
+    let i = 0;
+    let res: YandexTranslateResponse | void;
+    let e: AxiosError;
+
+    while (i < 10 && !res) {
+      const proxy = await this.proxyList.randomByProtocol("https");
+      const httpsAgent = new HttpsProxyAgent({
+        host: proxy.ip,
+        port: proxy.port,
+      });
+
+      try {
+        const $data = await axios.post<YandexTranslateResponse>(url, data, {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": randomUseragent.getRandom(),
+          },
+          httpsAgent,
+        });
+
+        res = $data.data;
+      } catch (e) {
+        i++;
+        console.info("detectLang attempt", i);
+      }
+    }
+
+    if (i >= 10 && e) throw e;
 
     return { sourceLang, ...res };
   }
@@ -60,18 +86,38 @@ export class Translate {
     const url = this.detectApiUri.replace("{t}", text.substring(0, 100));
     console.log(url);
 
-    let res = await axios
-      .get<YandexTranslateDetectResponse>(url, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "User-Agent": randomUseragent.getRandom(),
-        },
-      })
-      .then((r) => r.data)
-      .catch((e: AxiosError) => {
-        console.log(e.response.data, e.request);
+    let i = 0;
+    let res: YandexTranslateDetectResponse | void;
+    let e: AxiosError;
+
+    while (i < 10 && !res) {
+      const proxy = await this.proxyList.randomByProtocol("https");
+      const httpsAgent = new HttpsProxyAgent({
+        host: proxy.ip,
+        port: proxy.port,
       });
 
+      try {
+        res = await axios
+          .get<YandexTranslateDetectResponse>(url, {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "User-Agent": randomUseragent.getRandom(),
+            },
+            httpsAgent,
+          })
+          .then((r) => r.data)
+          .catch(($e: AxiosError) => {
+            e = $e;
+            throw e;
+          });
+      } catch (e) {
+        i++;
+        console.info("detectLang attempt", i);
+      }
+    }
+
+    if (i >= 10 && e) throw e;
     if (!res || !res.lang) res = { code: 0, lang: "en" };
 
     return res;
