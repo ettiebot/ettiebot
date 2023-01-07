@@ -51,7 +51,7 @@ export class Translate {
     console.log(url);
 
     let i = 0;
-    let res: YandexTranslateResponse | void;
+    let res: YandexTranslateResponse;
     let e: AxiosError;
 
     while (i < 10 && !res) {

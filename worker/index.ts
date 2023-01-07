@@ -1,29 +1,46 @@
-import TPromise from "thread-promises";
-import { Translate } from "../shared/translate.class";
 import { Browser } from "./browser";
 import { Network } from "./network";
-import { NetworkAskMethodPayload } from "../shared/types";
 import Worker from "./worker";
+import YouChatScript from "./scripts/youChat.script";
 
 const network = new Network();
 const browser = new Browser();
-const translate = new Translate();
-const worker = new Worker(network, browser, translate);
 
 setImmediate(async () => {
   // Start the browser
-  await browser.start();
+  const pBrowser = await browser.start();
 
-  // Subscribe to request
-  network.client.subscribeReq(
-    "ettie.io/ask",
-    async (data: NetworkAskMethodPayload) => {
-      return await new TPromise(async (resolve, reject) =>
-        worker.onAsk(data).then(resolve).catch(reject)
-      );
-    }
+  const ycScript = new YouChatScript(pBrowser);
+  await ycScript.init();
+
+  const worker = new Worker(network, ycScript);
+
+  console.log(
+    await worker.onAsk({ question: "Сколько будет 10+50?", history: [] })
+  );
+  console.log(
+    await worker.onAsk({
+      question: "Как правильно заниматься сексом?",
+      history: [],
+    })
+  );
+  console.log(
+    await worker.onAsk({
+      question: "Напиши длинную сказку про поросёнка",
+      history: [],
+    })
   );
 
-  // Connect to the network
-  await network.start();
+  // // Subscribe to request
+  // network.client.subscribeReq(
+  //   "ettie.io/ask",
+  //   async (data: NetworkAskMethodPayload) => {
+  //     return await new TPromise(async (resolve, reject) =>
+  //       worker.onAsk(data).then(resolve).catch(reject)
+  //     );
+  //   }
+  // );
+
+  // // Connect to the network
+  // await network.start();
 });

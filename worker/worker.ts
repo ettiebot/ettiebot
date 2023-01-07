@@ -1,22 +1,18 @@
-import { Translate } from "../shared/translate.class";
-import { cleanHistory } from "../utils";
-import { Browser } from "./browser";
-import { YOUCHAT_API_URL } from "./env";
 import { Network } from "./network";
 import {
   WorkerAskMethodPayload,
   WorkerAskMethodResponse,
 } from "../shared/types";
+import YouChatScript from "./scripts/youChat.script";
+const translatte = require("translatte");
 
 export default class Worker {
   client: Network;
-  browser: Browser;
-  translate: Translate;
+  ycScript: YouChatScript;
 
-  constructor(network: Network, browser: Browser, translate: Translate) {
+  constructor(network: Network, ycScript: YouChatScript) {
     this.client = network;
-    this.browser = browser;
-    this.translate = translate;
+    this.ycScript = ycScript;
   }
 
   /**
@@ -25,38 +21,37 @@ export default class Worker {
    * @result string
    */
   async onAsk({
-    question,
+    question: questionOrig,
     history = [],
-  }: WorkerAskMethodPayload): Promise<WorkerAskMethodResponse> {
+  }: WorkerAskMethodPayload): Promise<any> {
     // Translate the question into english
     const {
-      sourceLang: questionSrcLang,
-      text: [questionEN],
-    } = await this.translate.translate(question, "en");
+      text: question,
+      from: {
+        language: { iso: srcLang },
+      },
+    } = await translatte(questionOrig, {
+      to: "en",
+    });
 
     // Retreive answer from AI
-    const answerEN = await this.browser.get(
-      YOUCHAT_API_URL.replace("{q}", encodeURIComponent(questionEN)).replace(
-        "{h}",
-        encodeURIComponent(JSON.stringify(cleanHistory(history)))
-      )
-    );
+    const answerOrig = await this.ycScript.askQuestion(question);
 
-    // Translate the answer into question language
-    const {
-      text: [answer],
-    } = await this.translate.translateLongText(answerEN, questionSrcLang);
+    // Translate the question into original language
+    const { text: answer } = await translatte(answerOrig, {
+      to: srcLang,
+    });
 
     return {
       question: {
-        question,
-        questionEN,
-        lang: questionSrcLang,
+        question: questionOrig.trim(),
+        questionEN: question.trim(),
+        lang: srcLang,
       },
       answer: {
         text: answer.trim(),
-        textEN: answerEN.trim(),
-        lang: questionSrcLang,
+        textEN: answerOrig.trim(),
+        lang: "en",
       },
     };
   }
