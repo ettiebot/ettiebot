@@ -20,7 +20,23 @@ setImmediate(async () => {
   network.client.subscribeReq(
     "ettie.io/ask",
     async (data: NetworkAskMethodPayload) => {
-      return await worker.onAsk(data);
+      try {
+        await worker.onAsk(data);
+      } catch (e) {
+        console.error(e);
+        return {
+          question: {
+            question: data.question,
+            questionEN: data.question,
+            lang: "en",
+          },
+          answer: {
+            question: "An error occurred. Please try again later.",
+            questionEN: "An error occurred. Please try again later.",
+            lang: "en",
+          },
+        };
+      }
     }
   );
 
