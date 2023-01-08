@@ -21,7 +21,7 @@ setImmediate(async () => {
     "ettie.io/ask",
     async (data: NetworkAskMethodPayload) => {
       try {
-        await worker.onAsk(data);
+        return await worker.onAsk(data);
       } catch (e) {
         console.error(e);
         return {
