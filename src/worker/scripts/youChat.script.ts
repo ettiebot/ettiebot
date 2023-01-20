@@ -92,7 +92,7 @@ export default class YouChatScript {
 
         const es = new EventSource(uri);
 
-        es.addEventListener("token", (e) => {
+        es.addEventListener("youChatToken", (e) => {
           try {
             console.log(e.data);
             data += JSON.parse(e.data).token;
