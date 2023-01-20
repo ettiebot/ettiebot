@@ -48,7 +48,7 @@ export default class TelegramBot {
   private history = new History(this.redisClient);
   private service = new ServiceBroker({
     transporter: "redis://" + REDIS_HOST + ":" + REDIS_PORT,
-    nodeID: "ettieTelegramClient." + Math.random().toString(36),
+    nodeID: "ettieTelegramClient-" + Date.now().toString(36),
   });
 
   public ownerChatId = 5430459394;
