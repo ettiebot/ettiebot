@@ -23,8 +23,8 @@
   },
   "scripts": {
     "installWorker": "sh scripts/installWorkerDeps.sh",
-    "start:worker": "tsc -p ./tsconfig.json && NODE_OPTIONS='--max-old-space-size=8192' xvfb-run --auto-servernum node dist/worker/index.js",
-    "start:tg": "node dist/telegramBot/index.js",
+    "start:worker": "xvfb-run --auto-servernum node build/worker/index.js",
+    "start:tg": "node build/telegramBot/index.js",
     "build": "tsc -p ./tsconfig.json",
     "clean": "tsc --build --clean"
   },
