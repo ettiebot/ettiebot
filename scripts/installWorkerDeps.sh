@@ -4,4 +4,5 @@ sudo apt install -y xvfb
 curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install nodejs
 npm install
+npm run build
 echo "DON'T FORGET TO CREATE .env FILE AND SET 'TELEGRAM_BOT_TOKEN' !!!"
