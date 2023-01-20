@@ -8,13 +8,13 @@ type WorkerAskMethodPayload = {
 type WorkerAskMethodResponse = {
   question: {
     question: string;
-    questionEN?: string;
-    lang?: string;
+    questionEN: string;
+    lang: string;
   };
   answer: {
     text: string;
-    textEN?: string;
-    lang?: string;
+    textEN: string;
+    lang: string;
   };
 };
 

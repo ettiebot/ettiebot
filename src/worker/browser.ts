@@ -2,8 +2,7 @@ import getAppDataPath from "appdata-path";
 import puppeteer, * as p from "puppeteer";
 
 export class Browser {
-  browser: p.Browser;
-  page: p.Page;
+  browser: p.Browser | undefined;
 
   /**
    * Starts the browser

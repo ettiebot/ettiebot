@@ -4,7 +4,7 @@ import { YOUCHAT_API_URL } from "../env";
 
 export default class YouChatScript {
   browser: Browser;
-  page: Page;
+  page: Page | undefined;
 
   constructor(browser: Browser) {
     this.browser = browser;
@@ -27,6 +27,8 @@ export default class YouChatScript {
   }
 
   private async _bypassCF() {
+    if (!this.page) return;
+
     const noJs = await this.page.$(".no-js");
 
     if (noJs) {
@@ -54,7 +56,7 @@ export default class YouChatScript {
           const frame = this.page
             .frames()
             .find((frame) => frame.url().indexOf("challenges") !== -1);
-          await frame.click("input[type='checkbox']");
+          await frame?.click("input[type='checkbox']");
         }
       } catch (_) {}
     }
@@ -63,6 +65,8 @@ export default class YouChatScript {
   }
 
   async askQuestion(question: string): Promise<string> {
+    if (!this.page) return "error";
+
     console.info("[YC] Asking question '" + question + "'...");
 
     // Retreive answer from AI

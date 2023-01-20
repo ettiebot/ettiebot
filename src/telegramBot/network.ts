@@ -1,10 +1,7 @@
 import Translink from "@coryfoundation/translink";
 import TPromise from "thread-promises";
 import EventEmitter from "events";
-import {
-  WorkerAskMethodPayload,
-  WorkerAskMethodResponse,
-} from "../shared/types";
+import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import { NETWORK_ID } from "./env";
 
 export class Network extends EventEmitter {

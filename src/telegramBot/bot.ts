@@ -4,7 +4,7 @@ import RunParallel from "run-parallel";
 import { Telegraf } from "telegraf";
 import TPromise from "thread-promises";
 import { retry } from "ts-retry-promise";
-import { WorkerAskMethodResponse } from "../shared/types";
+import { WorkerAskMethodResponse } from "../types";
 import { delay } from "../utils";
 import { MENTION_PREDICT, MENTION_PREDICT_REGEXP } from "./const";
 import {
@@ -57,18 +57,21 @@ export default class TelegramBot {
   constructor(network: Network, bot = new Telegraf(TELEGRAM_BOT_TOKEN)) {
     this.network = network;
     this.bot = bot;
-    this.worker.on("failed", (job: Job, error: Error) => {
-      console.error(job, error);
-      this.bot.telegram.sendMessage(
-        this.ownerChatId,
-        "error\nname:" +
-          error.name +
-          "\nmessage:" +
-          error.message +
-          "\nstack:" +
-          error.stack
-      );
-    });
+    this.worker.on(
+      "failed",
+      (job: Job<any, any, string> | undefined, error: Error, prev: string) => {
+        console.error(job, error);
+        this.bot.telegram.sendMessage(
+          this.ownerChatId,
+          "error\nname:" +
+            error.name +
+            "\nmessage:" +
+            error.message +
+            "\nstack:" +
+            error.stack
+        );
+      }
+    );
   }
 
   async start() {
@@ -78,7 +81,7 @@ export default class TelegramBot {
   }
 
   private listen() {
-    this.bot.on("message", (ctx: TypegramMessage) => this.onMessage(ctx));
+    this.bot.on("message", (ctx: any) => this.onMessage(ctx));
   }
 
   private async onMessage(ctx: TypegramMessage) {
@@ -105,7 +108,7 @@ export default class TelegramBot {
     } else if (
       message.chat.id < 0 &&
       (!message.reply_to_message ||
-        message.reply_to_message.from.username !== TELEGRAM_BOT_USERNAME ||
+        message.reply_to_message.from?.username !== TELEGRAM_BOT_USERNAME ||
         (message.reply_to_message && message.text.indexOf("?") === -1))
     )
       return;
@@ -137,8 +140,13 @@ export default class TelegramBot {
     await job.waitUntilFinished(this.queueEvents);
     console.log("Done", job.id);
 
+    if (!job.id) return;
+
+    const resolvedJob = await Job.fromId(this.queue, job.id);
+    if (!resolvedJob) return;
+
     const { returnvalue: res }: { returnvalue: WorkerAskMethodResponse } =
-      await Job.fromId(this.queue, job.id);
+      resolvedJob;
 
     // Push question to history
     await this.history.push(dialogKey, {

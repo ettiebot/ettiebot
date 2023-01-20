@@ -2,7 +2,7 @@ import { Browser } from "./browser";
 import { Network } from "./network";
 import Worker from "./worker";
 import YouChatScript from "./scripts/youChat.script";
-import { NetworkAskMethodPayload } from "../shared/types";
+import { NetworkAskMethodPayload } from "../types";
 
 const network = new Network();
 const browser = new Browser();

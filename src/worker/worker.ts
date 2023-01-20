@@ -1,8 +1,5 @@
 import { Network } from "./network";
-import {
-  WorkerAskMethodPayload,
-  WorkerAskMethodResponse,
-} from "../shared/types";
+import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import YouChatScript from "./scripts/youChat.script";
 const translatte = require("translatte");
 
