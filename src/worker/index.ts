@@ -6,7 +6,7 @@ import { ServiceBroker } from "moleculer";
 
 const broker = new ServiceBroker({
   transporter: "redis://" + REDIS_HOST + ":" + REDIS_PORT,
-  nodeID: "ettieWorker",
+  nodeID: "ettieWorker-" + Date.now().toString(36),
 });
 
 const browser = new Browser();
