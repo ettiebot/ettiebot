@@ -191,6 +191,7 @@ export default class TelegramBot {
               response.answer.text,
               {
                 reply_to_message_id: ctx.messageId,
+                parse_mode: "Markdown",
               }
             );
 

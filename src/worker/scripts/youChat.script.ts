@@ -95,7 +95,7 @@ export default class YouChatScript {
         es.addEventListener("youChatToken", (e) => {
           try {
             console.log(e.data);
-            data += JSON.parse(e.data).token;
+            data += JSON.parse(e.data).youChatToken;
           } catch (e) {
             reject(e);
           }
