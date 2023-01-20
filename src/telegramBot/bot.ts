@@ -1,11 +1,7 @@
 import Redis from "ioredis";
 import { RateLimiterRedis } from "rate-limiter-flexible";
-import RunParallel from "run-parallel";
 import { Telegraf } from "telegraf";
-import TPromise from "thread-promises";
-import { retry } from "ts-retry-promise";
-import { WorkerAskMethodResponse } from "../types";
-import { delay } from "../utils";
+import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import { MENTION_PREDICT, MENTION_PREDICT_REGEXP } from "./const";
 import {
   REDIS_HOST,
@@ -14,12 +10,11 @@ import {
   TELEGRAM_BOT_USERNAME,
 } from "./env";
 import History from "./history";
-import { Network } from "./network";
 import { QueueTask, TypegramMessage } from "./types";
 import { Job, Queue, QueueEvents, Worker } from "bullmq";
+import { ServiceBroker } from "moleculer";
 
 export default class TelegramBot {
-  private network: Network;
   public bot: Telegraf;
   private redisClient = new Redis({
     enableOfflineQueue: false,
@@ -51,11 +46,14 @@ export default class TelegramBot {
   );
   private queueEvents = new QueueEvents("tg");
   private history = new History(this.redisClient);
+  private service = new ServiceBroker({
+    transporter: "redis://" + REDIS_HOST + ":" + REDIS_PORT,
+    nodeID: "ettieTelegramClient",
+  });
 
   public ownerChatId = 5430459394;
 
-  constructor(network: Network, bot = new Telegraf(TELEGRAM_BOT_TOKEN)) {
-    this.network = network;
+  constructor(bot = new Telegraf(TELEGRAM_BOT_TOKEN)) {
     this.bot = bot;
     this.worker.on(
       "failed",
@@ -75,6 +73,7 @@ export default class TelegramBot {
   }
 
   async start() {
+    await this.service.start();
     this.listen();
     await this.bot.launch();
     console.info("Telegram bot has been started");
@@ -160,58 +159,55 @@ export default class TelegramBot {
   private async writeReply(
     question: string,
     ctx: QueueTask["ctx"]
-  ): Promise<WorkerAskMethodResponse> {
-    return await new TPromise((resolve, reject) => {
-      let done = false;
-
-      RunParallel([
-        async () => {
-          await retry(
-            async () => {
-              if (!done) {
-                await this.bot.telegram.sendChatAction(ctx.chatId, "typing");
-                await delay(2000);
-                throw new Error();
-              } else return true;
-            },
-            { retries: 100 }
-          );
-        },
-        async (cb) => {
-          try {
-            console.log("started");
-
-            const response = await this.network.ask({
-              question,
-              history: [],
-            });
-
-            await this.bot.telegram.sendMessage(
-              ctx.chatId,
-              response.answer.text,
-              {
-                reply_to_message_id: ctx.messageId,
-                parse_mode: "Markdown",
-              }
-            );
-
-            done = true;
-
-            cb(null, true);
-            resolve(response);
-            console.info("done");
-          } catch (e) {
-            console.error(e);
-            throw e;
-          }
-        },
-      ]);
+  ): Promise<WorkerAskMethodResponse | null> {
+    const message = await this.bot.telegram.sendMessage(ctx.chatId, "✍️ ...", {
+      reply_to_message_id: ctx.messageId,
+      parse_mode: "Markdown",
     });
+
+    // await this.bot.telegram.sendChatAction(ctx.chatId, "typing");
+    // await delay(2000);
+
+    console.info("call worker.ask", question);
+
+    try {
+      const response = await this.service.call<
+        WorkerAskMethodResponse,
+        WorkerAskMethodPayload
+      >("worker.ask", {
+        question,
+        history: [],
+      });
+
+      console.info("response", response);
+
+      await this.bot.telegram.editMessageText(
+        ctx.chatId,
+        message.message_id,
+        undefined,
+        response.answer.text,
+        {
+          parse_mode: "Markdown",
+        }
+      );
+
+      return response;
+    } catch (e) {
+      console.error(e);
+      await this.bot.telegram.editMessageText(
+        ctx.chatId,
+        message.message_id,
+        undefined,
+        "❌ Error occured"
+      );
+      return null;
+    }
   }
 
-  private async _pullToQueue(data: any): Promise<WorkerAskMethodResponse> {
+  private async _pullToQueue(
+    data: any
+  ): Promise<WorkerAskMethodResponse | null> {
     const { question, ctx }: QueueTask = data;
-    console.log(data);
     return await this.writeReply(question, ctx);
   }
 }

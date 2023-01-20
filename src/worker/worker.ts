@@ -1,14 +1,11 @@
-import { Network } from "./network";
 import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import YouChatScript from "./scripts/youChat.script";
 const translatte = require("translatte");
 
 export default class Worker {
-  client: Network;
   ycScript: YouChatScript;
 
-  constructor(network: Network, ycScript: YouChatScript) {
-    this.client = network;
+  constructor(ycScript: YouChatScript) {
     this.ycScript = ycScript;
   }
 

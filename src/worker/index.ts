@@ -1,45 +1,38 @@
 import { Browser } from "./browser";
-import { Network } from "./network";
 import Worker from "./worker";
 import YouChatScript from "./scripts/youChat.script";
-import { NetworkAskMethodPayload } from "../types";
+import { REDIS_HOST, REDIS_PORT } from "./env";
+import { ServiceBroker } from "moleculer";
 
-const network = new Network();
+const broker = new ServiceBroker({
+  transporter: "redis://" + REDIS_HOST + ":" + REDIS_PORT,
+  nodeID: "ettieWorker",
+});
+
 const browser = new Browser();
 
-setImmediate(async () => {
+(async () => {
   // Start the browser
   const pBrowser = await browser.start();
 
   const ycScript = new YouChatScript(pBrowser);
   await ycScript.init();
 
-  const worker = new Worker(network, ycScript);
+  const worker = new Worker(ycScript);
 
-  // Subscribe to request
-  network.client.subscribeReq(
-    "ettie.io/ask",
-    async (data: NetworkAskMethodPayload) => {
-      try {
-        return await worker.onAsk(data);
-      } catch (e) {
-        console.error(e);
-        return {
-          question: {
-            question: data.question,
-            questionEN: data.question,
-            lang: "en",
-          },
-          answer: {
-            question: "An error occurred. Please try again later.",
-            questionEN: "An error occurred. Please try again later.",
-            lang: "en",
-          },
-        };
-      }
-    }
-  );
+  broker.createService({
+    name: "worker",
+    actions: {
+      async ask(ctx) {
+        return await worker.onAsk({
+          question: ctx.params.question,
+          history: ctx.params.history,
+        });
+      },
+    },
+  });
 
-  // Connect to the network
-  await network.start();
-});
+  broker
+    .start()
+    .catch((err) => console.error(`Error occurred! ${err.message}`));
+})();
