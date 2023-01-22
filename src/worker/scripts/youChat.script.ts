@@ -1,5 +1,7 @@
 import { delay } from "bullmq";
 import { Browser, Page } from "puppeteer";
+import { MessagesHistoryItem } from "../../types";
+import { cleanHistory } from "../../utils";
 import { YOUCHAT_API_URL } from "../env";
 
 export default class YouChatScript {
@@ -64,7 +66,10 @@ export default class YouChatScript {
     await this.page.waitForSelector("#__next", { timeout: 30000 });
   }
 
-  async askQuestion(question: string): Promise<string> {
+  async askQuestion(
+    question: string,
+    history: MessagesHistoryItem[] = []
+  ): Promise<string> {
     if (!this.page) return "error";
 
     console.info("[YC] Asking question '" + question + "'...");
@@ -73,13 +78,7 @@ export default class YouChatScript {
     const url = YOUCHAT_API_URL.replace(
       "{q}",
       encodeURIComponent(question)
-    ).replace(
-      "{h}",
-      encodeURIComponent(
-        // JSON.stringify(cleanHistory(history))
-        "[]"
-      )
-    );
+    ).replace("{h}", encodeURIComponent(JSON.stringify(cleanHistory(history))));
 
     const data: string = await this.page.evaluate((uri): Promise<string> => {
       return new Promise((resolve, reject) => {

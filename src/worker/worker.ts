@@ -1,12 +1,19 @@
 import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import YouChatScript from "./scripts/youChat.script";
-const translatte = require("translatte");
+import { YandexTranslator } from "../core/src/translators/YandexTranslator";
+import randomUseragent from "random-useragent";
 
 export default class Worker {
   ycScript: YouChatScript;
+  yandexTranslator: YandexTranslator;
 
   constructor(ycScript: YouChatScript) {
     this.ycScript = ycScript;
+    this.yandexTranslator = new YandexTranslator({
+      headers: {
+        "User-Agent": randomUseragent.getRandom(),
+      },
+    });
   }
 
   /**
@@ -15,37 +22,37 @@ export default class Worker {
    * @result string
    */
   async onAsk({
-    question: questionOrig,
+    question,
     history = [],
   }: WorkerAskMethodPayload): Promise<any> {
-    // Translate the question into english
-    const {
-      text: question,
-      from: {
-        language: { iso: srcLang },
-      },
-    } = await translatte(questionOrig, {
-      to: "en",
-    });
+    const { text, from, to } = await this.yandexTranslator.translate(
+      question,
+      "auto",
+      "en"
+    );
+
+    console.log(text, history);
 
     // Retreive answer from AI
-    const answerOrig = await this.ycScript.askQuestion(question);
+    const answerOrig = await this.ycScript.askQuestion(text, history);
 
     // Translate the question into original language
-    const { text: answer } = await translatte(answerOrig, {
-      to: srcLang,
-    });
+    const { text: answer } = await this.yandexTranslator.translate(
+      answerOrig,
+      "en",
+      from
+    );
 
     return {
       question: {
-        question: questionOrig.trim(),
-        questionEN: question.trim(),
-        lang: srcLang,
+        question: question.trim(),
+        questionEN: text.trim(),
+        lang: from,
       },
       answer: {
         text: answer.trim(),
         textEN: answerOrig.trim(),
-        lang: "en",
+        lang: to,
       },
     };
   }
