@@ -97,8 +97,8 @@ export default class TelegramBot {
       if (this.lastMessages.length + 1 > 5) this.lastMessages = [];
       this.lastMessages.push(dialogKey);
     } catch (e) {
-      if (this.lastMessages.filter((m) => m === dialogKey).length > 3)
-        await this.limiter.block(dialogKey, 60);
+      if (this.lastMessages.filter((m) => m === dialogKey).length > 2)
+        await this.limiter.penalty(dialogKey, 5);
       return await this.bot.telegram.sendMessage(
         ctx.message.chat.id,
         "⚠️ You are sending messages too fast. Please, wait a bit and try again later.",
