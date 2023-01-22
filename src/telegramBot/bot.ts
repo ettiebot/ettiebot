@@ -91,24 +91,6 @@ export default class TelegramBot {
     // Check what message have a text
     if (!message.text || message.text.length > 150) return false;
 
-    // Rate limiter
-    try {
-      await this.limiter.consume(dialogKey, 1);
-      if (this.lastMessages.length + 1 > 5) this.lastMessages = [];
-      this.lastMessages.push(dialogKey);
-    } catch (e) {
-      if (this.lastMessages.filter((m) => m === dialogKey).length > 2)
-        await this.limiter.penalty(dialogKey, 5);
-      return await this.bot.telegram.sendMessage(
-        ctx.message.chat.id,
-        "⚠️ You are sending messages too fast. Please, wait a bit and try again later.",
-        {
-          reply_to_message_id: message.message_id,
-          parse_mode: "Markdown",
-        }
-      );
-    }
-
     const matchRegexp = message.text.match(MENTION_PREDICT_REGEXP);
     const mentionPredict = matchRegexp
       ? Object.values(matchRegexp)[0]
@@ -130,6 +112,24 @@ export default class TelegramBot {
         (message.reply_to_message && message.text.indexOf("?") === -1))
     )
       return;
+
+    // Rate limiter
+    try {
+      await this.limiter.consume(dialogKey, 1);
+      if (this.lastMessages.length + 1 > 5) this.lastMessages = [];
+      this.lastMessages.push(dialogKey);
+    } catch (e) {
+      if (this.lastMessages.filter((m) => m === dialogKey).length > 2)
+        await this.limiter.penalty(dialogKey, 5);
+      return await this.bot.telegram.sendMessage(
+        ctx.message.chat.id,
+        "⚠️ You are sending messages too fast. Please, wait a bit and try again later.",
+        {
+          reply_to_message_id: message.message_id,
+          parse_mode: "Markdown",
+        }
+      );
+    }
 
     // Push a task to queue and retreive response
     const job = await this.queue.add(

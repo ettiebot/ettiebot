@@ -1,6 +1,6 @@
 import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import YouChatScript from "./scripts/youChat.script";
-import { YandexTranslator } from "../core/src/translators/YandexTranslator";
+import { YandexTranslator } from "../translator/translators/YandexTranslator/index";
 import randomUseragent from "random-useragent";
 
 export default class Worker {
