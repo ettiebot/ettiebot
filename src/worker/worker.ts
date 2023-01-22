@@ -2,6 +2,7 @@ import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import YouChatScript from "./scripts/youChat.script";
 import { YandexTranslator } from "../translator/translators/YandexTranslator/index";
 import randomUseragent from "random-useragent";
+import { cleanAnswer } from "../translator/util/cleanAnswer";
 
 export default class Worker {
   ycScript: YouChatScript;
@@ -31,10 +32,10 @@ export default class Worker {
       "en"
     );
 
-    console.log(text, history);
-
     // Retreive answer from AI
-    const answerOrig = await this.ycScript.askQuestion(text, history);
+    const answerOrig = cleanAnswer(
+      await this.ycScript.askQuestion(text, history)
+    );
 
     // Translate the question into original language
     const { text: answer } = await this.yandexTranslator.translate(

@@ -126,7 +126,6 @@ export default class TelegramBot {
         "⚠️ You are sending messages too fast. Please, wait a bit and try again later.",
         {
           reply_to_message_id: message.message_id,
-          parse_mode: "Markdown",
         }
       );
     }
@@ -176,7 +175,6 @@ export default class TelegramBot {
   ): Promise<WorkerAskMethodResponse | null> {
     const message = await this.bot.telegram.sendMessage(ctx.chatId, "✍️ ...", {
       reply_to_message_id: ctx.messageId,
-      parse_mode: "Markdown",
     });
 
     // await this.bot.telegram.sendChatAction(ctx.chatId, "typing");
@@ -201,10 +199,7 @@ export default class TelegramBot {
         ctx.chatId,
         message.message_id,
         undefined,
-        response.answer.text,
-        {
-          parse_mode: "Markdown",
-        }
+        response.answer.text
       );
 
       return response;
