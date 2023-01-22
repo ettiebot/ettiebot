@@ -147,6 +147,8 @@ export default class TelegramBot {
     const { returnvalue: res }: { returnvalue: WorkerAskMethodResponse } =
       resolvedJob;
 
+    if (!res?.question) return false;
+
     // Push question to history
     await this.history.push(dialogKey, {
       question: res.question.questionEN,
@@ -171,12 +173,14 @@ export default class TelegramBot {
     console.info("call worker.ask", question);
 
     try {
+      const history = await this.history.get(ctx.chatId + "." + ctx.userId);
+
       const response = await this.service.call<
         WorkerAskMethodResponse,
         WorkerAskMethodPayload
       >("worker.ask", {
         question,
-        history: [],
+        history,
       });
 
       console.info("response", response);

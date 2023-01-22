@@ -8,6 +8,11 @@ export default class History {
     this.redis = redis;
   }
 
+  async get(key: string): Promise<MessagesHistoryItem[]> {
+    const data = await this.redis.get("history/" + key);
+    return data ? JSON.parse(data) : [];
+  }
+
   async push(key: string, payload: MessagesHistoryItem) {
     let data = [];
 
