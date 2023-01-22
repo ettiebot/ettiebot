@@ -20,7 +20,7 @@ export default class History {
     if (!redisVal) data = [payload];
     else {
       data = JSON.parse(redisVal);
-      if (data.length > 50) data = data.splice(0, data.length - 1);
+      if (redisVal.length > 500) data = data.splice(0, data.length - 1);
       data.push(payload);
     }
 
