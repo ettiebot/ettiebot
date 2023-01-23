@@ -146,53 +146,64 @@ export default class TelegramBot {
     const dialogKey = "inline." + ctx.inlineQuery.from.id;
 
     // Check what message have a text
-    if (!ctx.inlineQuery.query || ctx.inlineQuery.query.length > 100)
+    if (
+      !ctx.inlineQuery.query ||
+      ctx.inlineQuery.query.length > 100 ||
+      (ctx.inlineQuery.query[ctx.inlineQuery.query.length - 1] !== "?" &&
+        ctx.inlineQuery.query[ctx.inlineQuery.query.length - 1] !== "!" &&
+        ctx.inlineQuery.query[ctx.inlineQuery.query.length - 1] !== ".")
+    )
       return false;
 
     const question = ctx.inlineQuery.query.trim();
 
-    // Rate limiter
     try {
-      await this.limiter.consume(dialogKey, 1);
-      if (this.lastMessages.length + 1 > 5) this.lastMessages = [];
-      this.lastMessages.push(dialogKey);
+      // Rate limiter
+      try {
+        await this.limiter.consume(dialogKey, 1);
+        if (this.lastMessages.length + 1 > 5) this.lastMessages = [];
+        this.lastMessages.push(dialogKey);
+      } catch (e) {
+        if (this.lastMessages.filter((m) => m === dialogKey).length > 2)
+          await this.limiter.penalty(dialogKey, 5);
+        return false;
+      }
+
+      // Push a task to queue and retreive response
+      const res = await this.questionsQueue.add(
+        async () =>
+          await this._pullToQueue({
+            question,
+            ctx: {
+              userId: ctx.inlineQuery.from.id,
+              isInline: true,
+            },
+          })
+      );
+
+      if (!res?.question) return false;
+
+      // Push question to history
+      await this.history.push(dialogKey, {
+        question: res.question.questionEN,
+        answer: res.answer.textEN,
+      });
+
+      return await ctx.answerInlineQuery([
+        {
+          type: "article",
+          id: "ask",
+          title: "Send reply to chat:",
+          description: res.answer.text,
+          input_message_content: {
+            message_text: res.answer.text,
+          },
+        },
+      ]);
     } catch (e) {
-      if (this.lastMessages.filter((m) => m === dialogKey).length > 2)
-        await this.limiter.penalty(dialogKey, 5);
+      console.error(e);
       return false;
     }
-
-    // Push a task to queue and retreive response
-    const res = await this.questionsQueue.add(
-      async () =>
-        await this._pullToQueue({
-          question,
-          ctx: {
-            userId: ctx.inlineQuery.from.id,
-            isInline: true,
-          },
-        })
-    );
-
-    if (!res?.question) return false;
-
-    // Push question to history
-    await this.history.push(dialogKey, {
-      question: res.question.questionEN,
-      answer: res.answer.textEN,
-    });
-
-    return await ctx.answerInlineQuery([
-      {
-        type: "article",
-        id: "ask",
-        title: "Send reply to chat:",
-        description: res.answer.text,
-        input_message_content: {
-          message_text: res.answer.text,
-        },
-      },
-    ]);
   }
 
   private async writeReply(
