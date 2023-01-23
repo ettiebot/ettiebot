@@ -10,67 +10,49 @@ import {
   TELEGRAM_BOT_USERNAME,
 } from "./env";
 import History from "./history";
-import { QueueTask, TypegramMessage } from "./types";
-import { Job, Queue, QueueEvents, Worker } from "bullmq";
+import { QueueTask, TypegramInlineQuery, TypegramMessage } from "./types";
 import { ServiceBroker } from "moleculer";
+import PQueue from "p-queue";
 
 export default class TelegramBot {
   public bot: Telegraf;
-  private redisClient = new Redis({
-    enableOfflineQueue: false,
-    host: REDIS_HOST,
-    port: REDIS_PORT,
+  private redisClient: Redis;
+  private limiter: RateLimiterRedis;
+  private history: History;
+
+  private questionsQueue = new PQueue({
+    concurrency: 1,
+    timeout: 60 * 1000,
+    interval: 5000,
+    intervalCap: 2,
   });
-  private limiter = new RateLimiterRedis({
-    points: 1,
-    duration: 10,
-    storeClient: this.redisClient,
-  });
-  private queue = new Queue("tg", {
-    defaultJobOptions: {
-      removeOnComplete: false,
-    },
-    connection: this.redisClient,
-  });
-  private worker = new Worker(
-    "tg",
-    async (job) => await this._pullToQueue(job.data),
-    {
-      concurrency: 2,
-      runRetryDelay: 10000,
-      limiter: {
-        max: 2,
-        duration: 10000,
-      },
-    }
-  );
-  private queueEvents = new QueueEvents("tg");
-  private history = new History(this.redisClient);
+
+  private lastMessages: string[] = [];
+
   private service = new ServiceBroker({
     transporter: "redis://" + REDIS_HOST + ":" + REDIS_PORT,
     nodeID: "ettieTelegramClient-" + Date.now().toString(36),
   });
 
-  public ownerChatId = 5430459394;
-  private lastMessages: string[] = [];
-
   constructor(bot = new Telegraf(TELEGRAM_BOT_TOKEN)) {
     this.bot = bot;
-    this.worker.on(
-      "failed",
-      (job: Job<any, any, string> | undefined, error: Error, prev: string) => {
-        console.error(job, error);
-        this.bot.telegram.sendMessage(
-          this.ownerChatId,
-          "error\nname:" +
-            error.name +
-            "\nmessage:" +
-            error.message +
-            "\nstack:" +
-            error.stack
-        );
-      }
-    );
+
+    console.info("Connecting to Redis...");
+    this.redisClient = new Redis({
+      enableOfflineQueue: false,
+      host: REDIS_HOST,
+      port: REDIS_PORT,
+    });
+
+    console.info("Initializing history...");
+    this.history = new History(this.redisClient);
+
+    console.info("Initializing rate limiter...");
+    this.limiter = new RateLimiterRedis({
+      points: 1,
+      duration: 10,
+      storeClient: this.redisClient,
+    });
   }
 
   async start() {
@@ -81,6 +63,12 @@ export default class TelegramBot {
   }
 
   private listen() {
+    this.bot.on("inline_query", (ctx) => this.onInlineQuery(ctx));
+
+    this.bot.on("chosen_inline_result", ({ chosenInlineResult }) => {
+      console.log("chosen inline result", chosenInlineResult);
+    });
+
     this.bot.on("message", (ctx: any) => this.onMessage(ctx));
   }
 
@@ -131,32 +119,17 @@ export default class TelegramBot {
     }
 
     // Push a task to queue and retreive response
-    const job = await this.queue.add(
-      "tg",
-      {
-        question,
-        ctx: {
-          chatId: ctx.chat.id,
-          userId: ctx.message.from.id,
-          messageId: ctx.message.message_id,
-        },
-      },
-      {
-        delay: 3000,
-      }
+    const res = await this.questionsQueue.add(
+      async () =>
+        await this._pullToQueue({
+          question,
+          ctx: {
+            chatId: ctx.chat.id,
+            userId: ctx.message.from.id,
+            messageId: ctx.message.message_id,
+          },
+        })
     );
-    console.log("Queued");
-
-    await job.waitUntilFinished(this.queueEvents);
-    console.log("Done", job.id);
-
-    if (!job.id) return;
-
-    const resolvedJob = await Job.fromId(this.queue, job.id);
-    if (!resolvedJob) return;
-
-    const { returnvalue: res }: { returnvalue: WorkerAskMethodResponse } =
-      resolvedJob;
 
     if (!res?.question) return false;
 
@@ -169,21 +142,80 @@ export default class TelegramBot {
     return true;
   }
 
-  private async writeReply(
-    question: string,
-    ctx: QueueTask["ctx"]
-  ): Promise<WorkerAskMethodResponse | null> {
-    const message = await this.bot.telegram.sendMessage(ctx.chatId, "✍️ ...", {
-      reply_to_message_id: ctx.messageId,
+  private async onInlineQuery(ctx: TypegramInlineQuery) {
+    const dialogKey = "inline." + ctx.inlineQuery.from.id;
+
+    // Check what message have a text
+    if (!ctx.inlineQuery.query || ctx.inlineQuery.query.length > 100)
+      return false;
+
+    const question = ctx.inlineQuery.query
+      .replace(MENTION_PREDICT_REGEXP, "")
+      .trim();
+
+    // Rate limiter
+    try {
+      await this.limiter.consume(dialogKey, 1);
+      if (this.lastMessages.length + 1 > 5) this.lastMessages = [];
+      this.lastMessages.push(dialogKey);
+    } catch (e) {
+      if (this.lastMessages.filter((m) => m === dialogKey).length > 2)
+        await this.limiter.penalty(dialogKey, 5);
+      return false;
+    }
+
+    // Push a task to queue and retreive response
+    const res = await this.questionsQueue.add(
+      async () =>
+        await this._pullToQueue({
+          question,
+          ctx: {
+            userId: ctx.inlineQuery.from.id,
+            isInline: true,
+          },
+        })
+    );
+
+    if (!res?.question) return false;
+
+    // Push question to history
+    await this.history.push(dialogKey, {
+      question: res.question.questionEN,
+      answer: res.answer.textEN,
     });
 
-    // await this.bot.telegram.sendChatAction(ctx.chatId, "typing");
-    // await delay(2000);
+    return await ctx.answerInlineQuery([
+      {
+        type: "article",
+        id: "ask",
+        title: "Send reply to chat:",
+        description: res.answer.text,
+        input_message_content: {
+          message_text: res.answer.text,
+        },
+      },
+    ]);
+  }
 
-    console.info("call worker.ask", question);
+  private async writeReply(
+    question: QueueTask["question"],
+    ctx: QueueTask["ctx"]
+  ): Promise<WorkerAskMethodResponse | null> {
+    const message =
+      !ctx.isInline && ctx.chatId
+        ? await this.bot.telegram.sendMessage(ctx.chatId, "✍️ ...", {
+            reply_to_message_id: ctx.messageId,
+          })
+        : null;
 
     try {
-      const history = await this.history.get(ctx.chatId + "." + ctx.userId);
+      console.log(question.length);
+      if (ctx.isInline && question.length < 15)
+        throw new Error("Too short question");
+
+      const history = await this.history.get(
+        (ctx.chatId ?? "inline") + "." + ctx.userId
+      );
 
       const response = await this.service.call<
         WorkerAskMethodResponse,
@@ -193,32 +225,50 @@ export default class TelegramBot {
         history,
       });
 
+      if (!ctx.isInline && ctx.chatId)
+        await this.bot.telegram.editMessageText(
+          ctx.chatId,
+          message?.message_id,
+          undefined,
+          response.answer.text
+        );
+
       console.info("response", response);
 
-      await this.bot.telegram.editMessageText(
-        ctx.chatId,
-        message.message_id,
-        undefined,
-        response.answer.text
-      );
-
       return response;
-    } catch (e) {
-      console.error(e);
-      await this.bot.telegram.editMessageText(
-        ctx.chatId,
-        message.message_id,
-        undefined,
-        "❌ Error occured"
-      );
-      return null;
+    } catch (e: any) {
+      if (!ctx.isInline && ctx.chatId) {
+        await this.bot.telegram.editMessageText(
+          ctx.chatId,
+          message?.message_id,
+          undefined,
+          "❌ " + e.toString()
+        );
+
+        return null;
+      } else
+        return {
+          question: {
+            question,
+            questionEN: question,
+            lang: "auto",
+          },
+          answer: {
+            text: "❌ " + e.toString(),
+            textEN: "❌ Error occured",
+            lang: "en",
+          },
+        };
     }
   }
 
   private async _pullToQueue(
     data: any
   ): Promise<WorkerAskMethodResponse | null> {
+    console.info("PULL");
     const { question, ctx }: QueueTask = data;
-    return await this.writeReply(question, ctx);
+    return await this.writeReply(question, ctx)
+      .then((r) => r)
+      .catch((e) => e.toString());
   }
 }

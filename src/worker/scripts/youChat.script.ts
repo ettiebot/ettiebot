@@ -1,4 +1,4 @@
-import { delay } from "bullmq";
+import { delay } from "../../utils/promiseDelay.util";
 import { Browser, Page } from "puppeteer";
 import { MessagesHistoryItem } from "../../types";
 import { cleanHistory } from "../../utils";

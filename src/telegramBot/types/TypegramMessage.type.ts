@@ -9,3 +9,7 @@ export type TypegramMessage = NarrowedContext<
   Context<Update>,
   Update.MessageUpdate<Message>
 > & { message: { text: string; reply_to_message: ReplyMessage } };
+export type TypegramInlineQuery = NarrowedContext<
+  Context<Update>,
+  Update.InlineQueryUpdate
+>;
