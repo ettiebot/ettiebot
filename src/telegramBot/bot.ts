@@ -149,9 +149,7 @@ export default class TelegramBot {
     if (!ctx.inlineQuery.query || ctx.inlineQuery.query.length > 100)
       return false;
 
-    const question = ctx.inlineQuery.query
-      .replace(MENTION_PREDICT_REGEXP, "")
-      .trim();
+    const question = ctx.inlineQuery.query.trim();
 
     // Rate limiter
     try {
