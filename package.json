@@ -20,11 +20,8 @@
     "xpath": "^0.0.32"
   },
   "scripts": {
-    "installWorker": "sh scripts/installWorkerDeps.sh",
-    "start:worker": "xvfb-run --auto-servernum node build/worker/index.js",
-    "start:tg": "node build/telegramBot/index.js",
-    "build": "npm run clean && tsc -p ./tsconfig.json",
-    "clean": "tsc --build --clean"
+    "start": "node build/telegramBot/index.js",
+    "build": "tsc --build --clean && tsc -p ./tsconfig.json"
   },
   "name": "ettiebot",
   "version": "0.1.0",

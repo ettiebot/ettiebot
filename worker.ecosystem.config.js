@@ -1,9 +1,15 @@
 module.exports = {
-  apps: [
-    {
-      name: 'worker',
-      script: 'npm run start:worker',
-      max_memory_restart: '1G',
-    },
-  ]
+  "apps" : [{
+    "name"        : "ettie-worker",
+    "script"      : "build/worker/index.js",
+    "env": {
+      "DISPLAY": ":99"
+    }
+  },
+  {
+    "name"        : "Xvfb",
+    "interpreter" : "none",
+    "script"      : "Xvfb",
+    "args"        : ":99"
+  }]
 }
