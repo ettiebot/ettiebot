@@ -1,12 +1,28 @@
-# ettiebot
-A bot that will answer any question... well, almost any question.
+</br>
+</br>
 
-## How to run Telegram bot
-Ubuntu/Debian:
-- 1. Run application using "npm run start:tg"
-## How to run a worker
-Ubuntu/Debian:
-- 1. Install worker dependencies using "npm run installWorker"
-- 2. Run application using "npm run start:worker"
+<center><img src="./logo.svg"/></center>
+</br>
+</br>
 
-Enjoy! :)
+## Telegram bot and API layer for chatbot from you.com based on **GPT-3**.
+Written using **Puppeteer** and **Moleculer**.
+
+Divided into two parts:
+- ***worker** (a browser that asks a question and gives an answer)*
+- ***bot** (a Telegram bot that lets you ask a question)*
+
+## Installation
+1. First, you need to install Redis. It can be installed either locally or on server.
+
+- `sudo apt-get install redis-server`
+
+2. Then, you need to run the `sh install.sh` script on any server. It will install the dependencies for Puppeteer and start Worker in PM2.
+
+3. Then, create a `.env` file, fill it with your data (according to the `.env.example` file), then run the command
+- `pm2 restart ettie-worker`
+
+4. Run Telegram bot locally or on any other server. Create `.env` file, fill it with information according to `.env.example` (**note:** you need to connect bot to the same Redis server that Workers is connected to), run:
+- `npm install && npm run build`
+- `npm run start`
+
