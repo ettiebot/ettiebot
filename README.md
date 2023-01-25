@@ -1,7 +1,7 @@
 </br>
 </br>
 
-<center><img src="./logo.svg"/></center>
+<p align="center"><img src="./logo.svg"/></p>
 </br>
 </br>
 
