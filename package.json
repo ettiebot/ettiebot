@@ -24,9 +24,9 @@
     "build": "tsc --build --clean && tsc -p ./tsconfig.json"
   },
   "name": "ettiebot",
-  "version": "0.1.0",
-  "description": "Etttie - a bot that will answer any question on any language.",
-  "repository": "https://github.com/dortanes/ettiebot.git",
+  "version": "1.0.0",
+  "description": "Telegram bot and API layer for chatbot from you.com based on GPT-3",
+  "repository": "https://github.com/ettiebot/ettiebot.git",
   "author": "dortanes",
   "license": "MIT",
   "devDependencies": {
