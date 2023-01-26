@@ -17,12 +17,5 @@ const TELEGRAM_BOT_USERNAME = env
   .asString();
 const REDIS_HOST = env.get("REDIS_HOST").default("localhost").asString();
 const REDIS_PORT = env.get("REDIS_PORT").default(6379).asPortNumber();
-const REDIS_PASSWORD = env.get("REDIS_PASSWORD").asString();
 
-export {
-  TELEGRAM_BOT_TOKEN,
-  TELEGRAM_BOT_USERNAME,
-  REDIS_HOST,
-  REDIS_PORT,
-  REDIS_PASSWORD,
-};
+export { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME, REDIS_HOST, REDIS_PORT };

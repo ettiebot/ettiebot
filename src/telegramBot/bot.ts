@@ -5,7 +5,6 @@ import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import { MENTION_PREDICT, MENTION_PREDICT_REGEXP } from "./const";
 import {
   REDIS_HOST,
-  REDIS_PASSWORD,
   REDIS_PORT,
   TELEGRAM_BOT_TOKEN,
   TELEGRAM_BOT_USERNAME,
@@ -31,15 +30,7 @@ export default class TelegramBot {
   private lastMessages: string[] = [];
 
   private service = new ServiceBroker({
-    transporter: {
-      type: "Redis",
-      options: {
-        host: REDIS_HOST,
-        port: REDIS_PORT,
-        password: REDIS_PASSWORD,
-        db: 0,
-      },
-    },
+    transporter: "redis://" + REDIS_HOST + ":" + REDIS_PORT,
     nodeID: "ettieTelegramClient-" + Date.now().toString(36),
   });
 
@@ -51,7 +42,6 @@ export default class TelegramBot {
       enableOfflineQueue: false,
       host: REDIS_HOST,
       port: REDIS_PORT,
-      password: REDIS_PASSWORD,
     });
 
     console.info("Initializing history...");
