@@ -31,12 +31,15 @@ export default class TelegramBot {
   private lastMessages: string[] = [];
 
   private service = new ServiceBroker({
-    transporter:
-      "redis://" +
-      (REDIS_PASSWORD ? REDIS_PASSWORD + "@" : "") +
-      REDIS_HOST +
-      ":" +
-      REDIS_PORT,
+    transporter: {
+      type: "Redis",
+      options: {
+        host: REDIS_HOST,
+        port: REDIS_PORT,
+        password: REDIS_PASSWORD,
+        db: 0,
+      },
+    },
     nodeID: "ettieTelegramClient-" + Date.now().toString(36),
   });
 
