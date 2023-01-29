@@ -5,7 +5,7 @@
 </br>
 </br>
 
-## Telegram bot and API layer for chatbot from you.com based on **GPT-3**
+## Telegram bot and API layer for [you.com](https://you.com) GPT-3 chatbot
 Written using **Puppeteer** and **Moleculer**.
 
 Divided into two parts:
