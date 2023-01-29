@@ -22,39 +22,60 @@ export default class Worker {
    * @param param0 WorkerAskMethodPayload
    * @result string
    */
-  async onAsk({
+  public async onAsk({
     question,
     history = [],
-  }: WorkerAskMethodPayload): Promise<any> {
-    const { text, from, to } = await this.yandexTranslator.translate(
-      question,
-      "auto",
-      "en"
-    );
+    withoutTranslate = false,
+  }: WorkerAskMethodPayload): Promise<WorkerAskMethodResponse> {
+    if (!withoutTranslate) {
+      const { text, from, to } = await this.yandexTranslator.translate(
+        question,
+        "auto",
+        "en"
+      );
 
-    // Retreive answer from AI
-    const answerOrig = cleanAnswer(
-      await this.ycScript.askQuestion(text, history)
-    );
+      // Retreive answer from AI
+      const answerOrig = cleanAnswer(
+        await this.ycScript.askQuestion(text, history)
+      );
 
-    // Translate the question into original language
-    const { text: answer } = await this.yandexTranslator.translate(
-      answerOrig,
-      "en",
-      from
-    );
+      // Translate the question into original language
+      const { text: answer } = await this.yandexTranslator.translate(
+        answerOrig,
+        "en",
+        from
+      );
 
-    return {
-      question: {
-        question: question.trim(),
-        questionEN: text.trim(),
-        lang: from,
-      },
-      answer: {
-        text: answer.trim(),
-        textEN: answerOrig.trim(),
-        lang: to,
-      },
-    };
+      return {
+        question: {
+          question: question.trim(),
+          questionEN: text.trim(),
+          lang: from,
+        },
+        answer: {
+          text: answer.trim(),
+          textEN: answerOrig.trim(),
+          lang: to,
+        },
+      };
+    } else {
+      // Retreive answer from AI
+      const answerOrig = cleanAnswer(
+        await this.ycScript.askQuestion(question, history)
+      );
+
+      return {
+        question: {
+          question: question.trim(),
+          questionEN: question.trim(),
+          lang: null,
+        },
+        answer: {
+          text: answerOrig.trim(),
+          textEN: answerOrig.trim(),
+          lang: null,
+        },
+      };
+    }
   }
 }

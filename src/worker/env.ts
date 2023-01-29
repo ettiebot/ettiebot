@@ -15,7 +15,7 @@ const REDIS_PORT = env.get("REDIS_PORT").default(6379).asPortNumber();
 const YOUCHAT_API_URL = env
   .get("YOUCHAT_API_URL")
   .default(
-    "https://you.com/api/streamingSearch?q={q}&page=1&count=10&safeSearch=Moderate&onShoppingPage=false&domain=youchat&queryTraceId=5577a8c4-696a-4795-b515-79ac815269a2&chat={h}"
+    "https://you.com/api/streamingSearch?q={q}&page=1&count=1&safeSearch=Off&onShoppingPage=false&responseFilter=WebPages,Translations,TimeZone,Computation,RelatedSearches&domain=youchat&queryTraceId={uid}&history={h}"
   )
   .asUrlString();
 

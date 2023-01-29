@@ -7,5 +7,8 @@ export type QueueTask = {
     userId: number;
     messageId?: number;
     isInline?: boolean;
+    workerParams?: {
+      [key: string]: string;
+    };
   };
 };

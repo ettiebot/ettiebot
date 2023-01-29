@@ -24,10 +24,7 @@ const browser = new Browser();
     name: "worker",
     actions: {
       async ask(ctx) {
-        return await worker.onAsk({
-          question: ctx.params.question,
-          history: ctx.params.history,
-        });
+        return await worker.onAsk(ctx.params);
       },
     },
   });

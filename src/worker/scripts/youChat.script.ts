@@ -3,6 +3,7 @@ import { Browser, Page } from "puppeteer";
 import { MessagesHistoryItem } from "../../types";
 import { cleanHistory } from "../../utils";
 import { YOUCHAT_API_URL } from "../env";
+import { randomUUID } from "crypto";
 
 export default class YouChatScript {
   browser: Browser;
@@ -75,10 +76,12 @@ export default class YouChatScript {
     console.info("[YC] Asking question '" + question + "'...");
 
     // Retreive answer from AI
-    const url = YOUCHAT_API_URL.replace(
-      "{q}",
-      encodeURIComponent(question)
-    ).replace("{h}", encodeURIComponent(JSON.stringify(cleanHistory(history))));
+    const url = YOUCHAT_API_URL.replace("{q}", encodeURIComponent(question))
+      .replace("{uid}", randomUUID())
+      .replace(
+        "{h}",
+        encodeURIComponent(JSON.stringify(cleanHistory(history)))
+      );
 
     const data: string = await this.page.evaluate((uri): Promise<string> => {
       return new Promise((resolve, reject) => {

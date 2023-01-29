@@ -118,6 +118,8 @@ export default class TelegramBot {
       );
     }
 
+    const withoutTranslate = question.includes("#wt");
+
     // Push a task to queue and retreive response
     const res = await this.questionsQueue.add(
       async () =>
@@ -127,6 +129,9 @@ export default class TelegramBot {
             chatId: ctx.chat.id,
             userId: ctx.message.from.id,
             messageId: ctx.message.message_id,
+            workerParams: {
+              withoutTranslate,
+            },
           },
         })
     );
@@ -169,6 +174,8 @@ export default class TelegramBot {
         return false;
       }
 
+      const withoutTranslate = question.includes("#wt");
+
       // Push a task to queue and retreive response
       const res = await this.questionsQueue.add(
         async () =>
@@ -177,6 +184,9 @@ export default class TelegramBot {
             ctx: {
               userId: ctx.inlineQuery.from.id,
               isInline: true,
+              workerParams: {
+                withoutTranslate,
+              },
             },
           })
       );
@@ -232,6 +242,7 @@ export default class TelegramBot {
       >("worker.ask", {
         question,
         history,
+        ...ctx.workerParams,
       });
 
       if (!ctx.isInline && ctx.chatId)
