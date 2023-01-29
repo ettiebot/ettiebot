@@ -30,8 +30,8 @@ ENV DISPLAY :99
 
 ADD client.run.sh /client.run.sh
 
-RUN chmod a+x /client.run.sh
+RUN chmod 777 /client.run.sh
 
-ENTRYPOINT [ "/opt/app/client.run.sh" ]
+ENTRYPOINT [ "sh" ]
 
-CMD []
+CMD [ "client.run.sh" ]
