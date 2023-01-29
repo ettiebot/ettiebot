@@ -24,7 +24,7 @@
     "build": "tsc --build --clean && tsc -p ./tsconfig.json"
   },
   "name": "ettiebot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Telegram bot and API layer for chatbot from you.com based on GPT-3",
   "repository": "https://github.com/ettiebot/ettiebot.git",
   "author": "dortanes",
