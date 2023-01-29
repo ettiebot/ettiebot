@@ -32,4 +32,6 @@ ADD client.run.sh /client.run.sh
 
 RUN chmod a+x /client.run.sh
 
-ENTRYPOINT [ "client.run.sh" ]
+ENTRYPOINT [ "/opt/app/client.run.sh" ]
+
+CMD []
