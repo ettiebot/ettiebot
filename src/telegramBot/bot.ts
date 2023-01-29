@@ -1,6 +1,6 @@
 import Redis from "ioredis";
 import { RateLimiterRedis } from "rate-limiter-flexible";
-import { Telegraf } from "telegraf";
+import { Markup, Telegraf } from "telegraf";
 import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
 import { MENTION_PREDICT, MENTION_PREDICT_REGEXP } from "./const";
 import {
@@ -119,6 +119,8 @@ export default class TelegramBot {
     }
 
     const withoutTranslate = question.includes("#wt");
+    question = question.replace("#wt", "");
+    console.log(question, withoutTranslate);
 
     // Push a task to queue and retreive response
     const res = await this.questionsQueue.add(
@@ -160,7 +162,7 @@ export default class TelegramBot {
     )
       return false;
 
-    const question = ctx.inlineQuery.query.trim();
+    let question = ctx.inlineQuery.query.trim();
 
     try {
       // Rate limiter
@@ -175,6 +177,7 @@ export default class TelegramBot {
       }
 
       const withoutTranslate = question.includes("#wt");
+      question = question.replace("#wt", "");
 
       // Push a task to queue and retreive response
       const res = await this.questionsQueue.add(
@@ -250,7 +253,14 @@ export default class TelegramBot {
           ctx.chatId,
           message?.message_id,
           undefined,
-          response.answer.text
+          response.answer.text,
+          {
+            ...Markup.inlineKeyboard(
+              response.answer.searchResults.map((r) => [
+                Markup.button.url(r.url, r.name),
+              ])
+            ),
+          }
         );
 
       console.info("response", response);
@@ -276,6 +286,7 @@ export default class TelegramBot {
           answer: {
             text: "❌ " + e.toString(),
             textEN: "❌ Error occured",
+            searchResults: [],
             lang: "en",
           },
         };

@@ -1,4 +1,5 @@
 import { MessagesHistory } from "./MessagesHistory.type";
+import { YouChatSerpResult } from "./YouChatSerpResult.type";
 
 type WorkerAskMethodPayload = {
   question: string;
@@ -15,6 +16,7 @@ type WorkerAskMethodResponse = {
   answer: {
     text: string;
     textEN: string;
+    searchResults: YouChatSerpResult[];
     lang: string | null;
   };
 };

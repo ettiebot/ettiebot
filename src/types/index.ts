@@ -9,3 +9,4 @@ export {
   WorkerAskMethodPayload,
   WorkerAskMethodResponse,
 } from "./WorkerAskMethod.type";
+export * from "./YouChatSerpResult.type";

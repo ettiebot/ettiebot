@@ -1,9 +1,15 @@
 import { delay } from "../../utils/promiseDelay.util";
 import { Browser, Page } from "puppeteer";
-import { MessagesHistoryItem } from "../../types";
+import {
+  MessagesHistoryItem,
+  Search,
+  ThirdPartySearchResult,
+  YouChatSerpResult,
+} from "../../types";
 import { cleanHistory } from "../../utils";
 import { YOUCHAT_API_URL } from "../env";
 import { randomUUID } from "crypto";
+import { AskQuestionResponse } from "../types";
 
 export default class YouChatScript {
   browser: Browser;
@@ -70,8 +76,9 @@ export default class YouChatScript {
   async askQuestion(
     question: string,
     history: MessagesHistoryItem[] = []
-  ): Promise<string> {
-    if (!this.page) return "error";
+  ): Promise<AskQuestionResponse> {
+    if (!this.page)
+      throw new Error("[YC -> askQuestion()] Page is not defined");
 
     console.info("[YC] Asking question '" + question + "'...");
 
@@ -83,9 +90,13 @@ export default class YouChatScript {
         encodeURIComponent(JSON.stringify(cleanHistory(history)))
       );
 
-    const data: string = await this.page.evaluate((uri): Promise<string> => {
+    const data: {
+      t: string;
+      s: YouChatSerpResult[];
+      es: Search;
+    } = await this.page.evaluate((uri): Promise<any> => {
       return new Promise((resolve, reject) => {
-        let data = "";
+        let data = { t: "", s: [], es: {} };
 
         const rejectTimer = setTimeout(
           () => reject(new Error("[YC -> askQuestion()] Request timeout")),
@@ -94,10 +105,28 @@ export default class YouChatScript {
 
         const es = new EventSource(uri);
 
+        es.addEventListener("thirdPartySearchResults", (e) => {
+          try {
+            console.log(e.data);
+            data.es = JSON.parse(e.data).search;
+          } catch (e) {
+            reject(e);
+          }
+        });
+
+        es.addEventListener("youChatSerpResults", (e) => {
+          try {
+            console.log(e.data);
+            data.s = JSON.parse(e.data).youChatSerpResults;
+          } catch (e) {
+            reject(e);
+          }
+        });
+
         es.addEventListener("youChatToken", (e) => {
           try {
             console.log(e.data);
-            data += JSON.parse(e.data).youChatToken;
+            data.t += JSON.parse(e.data).youChatToken;
           } catch (e) {
             reject(e);
           }
@@ -114,7 +143,38 @@ export default class YouChatScript {
 
     if (!data) throw "Answer is empty";
 
-    console.info("[YC] Answer: " + data);
-    return data;
+    const searchResults = this._getSearchResults(
+      data.s,
+      data.es.third_party_search_results
+    );
+
+    console.info(
+      "[YC] Answer: ",
+      data,
+      data.es,
+      data.es.third_party_search_results
+    );
+    return {
+      answer: data.t,
+      searchResults,
+    };
+  }
+
+  private _getSearchResults(
+    serp: YouChatSerpResult[],
+    thirdParty: ThirdPartySearchResult[]
+  ) {
+    return [
+      ...serp.map((res) => ({
+        name: res.name,
+        url: res.url,
+        snippet: res.snippet,
+      })),
+      ...thirdParty.map((res) => ({
+        name: res.name,
+        url: res.url,
+        snippet: res.snippet,
+      })),
+    ];
   }
 }

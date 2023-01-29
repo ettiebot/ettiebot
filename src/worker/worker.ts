@@ -41,7 +41,7 @@ export default class Worker {
 
       // Translate the question into original language
       const { text: answer } = await this.yandexTranslator.translate(
-        answerOrig,
+        answerOrig.answer,
         "en",
         from
       );
@@ -54,7 +54,8 @@ export default class Worker {
         },
         answer: {
           text: answer.trim(),
-          textEN: answerOrig.trim(),
+          textEN: answerOrig.answer.trim(),
+          searchResults: answerOrig.searchResults,
           lang: to,
         },
       };
@@ -71,8 +72,9 @@ export default class Worker {
           lang: null,
         },
         answer: {
-          text: answerOrig.trim(),
-          textEN: answerOrig.trim(),
+          text: answerOrig.answer.trim(),
+          textEN: answerOrig.answer.trim(),
+          searchResults: answerOrig.searchResults,
           lang: null,
         },
       };

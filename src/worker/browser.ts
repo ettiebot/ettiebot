@@ -15,7 +15,7 @@ export class Browser {
         "--disable-setuid-sandbox",
         "--user-data-dir=" + getAppDataPath("ettie"),
       ],
-      executablePath: "/usr/bin/google-chrome",
+      // executablePath: "/usr/bin/google-chrome",
     });
 
     console.info("Browser has been started");

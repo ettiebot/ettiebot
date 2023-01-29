@@ -1,4 +1,6 @@
-export function cleanAnswer(text: string) {
+import { AskQuestionResponse } from "../../worker/types";
+
+export function cleanAnswer(data: AskQuestionResponse): AskQuestionResponse {
   let regex = new RegExp("\\[.*\\]\\(.*\\)", "g");
-  return text.replace(regex, "");
+  return { ...data, answer: data.answer.replace(regex, "") };
 }
