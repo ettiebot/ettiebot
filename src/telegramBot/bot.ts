@@ -1,7 +1,11 @@
 import Redis from "ioredis";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { Markup, Telegraf } from "telegraf";
-import { WorkerAskMethodPayload, WorkerAskMethodResponse } from "../types";
+import {
+  WorkerAskMethodPayload,
+  WorkerAskMethodResponse,
+  YouChatSerpResult,
+} from "../types";
 import { MENTION_PREDICT, MENTION_PREDICT_REGEXP } from "./const";
 import {
   REDIS_HOST,
@@ -13,6 +17,7 @@ import History from "./history";
 import { QueueTask, TypegramInlineQuery, TypegramMessage } from "./types";
 import { ServiceBroker } from "moleculer";
 import PQueue from "p-queue";
+import { getUniqueItemsByProperties } from "../utils";
 
 export default class TelegramBot {
   public bot: Telegraf;
@@ -256,7 +261,9 @@ export default class TelegramBot {
           response.answer.text,
           {
             ...Markup.inlineKeyboard(
-              response.answer.searchResults.map((r) => [
+              getUniqueItemsByProperties(response.answer.searchResults, [
+                "url",
+              ]).map((r: YouChatSerpResult) => [
                 Markup.button.url(r.name, r.url),
               ])
             ),
