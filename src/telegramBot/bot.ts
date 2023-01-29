@@ -257,7 +257,7 @@ export default class TelegramBot {
           {
             ...Markup.inlineKeyboard(
               response.answer.searchResults.map((r) => [
-                Markup.button.url(r.url, r.name),
+                Markup.button.url(r.name, r.url),
               ])
             ),
           }
