@@ -6,7 +6,7 @@ import {
   WorkerAskMethodResponse,
   YouChatSerpResult,
 } from "../types";
-import { MENTION_PREDICT, MENTION_PREDICT_REGEXP } from "./const";
+import { MENTION_PREDICT, MENTION_PREDICT_REGEXP, MESSAGE_TAGS } from "./const";
 import {
   REDIS_HOST,
   REDIS_PORT,
@@ -123,9 +123,13 @@ export default class TelegramBot {
       );
     }
 
-    const withoutTranslate = question.includes("#wt");
-    question = question.replace("#wt", "");
-    console.log(question, withoutTranslate);
+    const workerParams: { [key: string]: boolean } = {};
+
+    Object.keys(MESSAGE_TAGS).map((tag) => {
+      if (question.includes(tag)) workerParams[MESSAGE_TAGS[tag]] = true;
+      question = question.replace(tag, "");
+    });
+    console.log(question, workerParams);
 
     // Push a task to queue and retreive response
     const res = await this.questionsQueue.add(
@@ -136,9 +140,7 @@ export default class TelegramBot {
             chatId: ctx.chat.id,
             userId: ctx.message.from.id,
             messageId: ctx.message.message_id,
-            workerParams: {
-              withoutTranslate,
-            },
+            workerParams,
           },
         })
     );
@@ -261,11 +263,13 @@ export default class TelegramBot {
           response.answer.text,
           {
             ...Markup.inlineKeyboard(
-              getUniqueItemsByProperties(response.answer.searchResults, [
-                "url",
-              ]).map((r: YouChatSerpResult) => [
-                Markup.button.url(r.name, r.url),
-              ])
+              !ctx.workerParams?.withoutSearch
+                ? getUniqueItemsByProperties(response.answer.searchResults, [
+                    "url",
+                  ]).map((r: YouChatSerpResult) => [
+                    Markup.button.url(r.name, r.url),
+                  ])
+                : []
             ),
           }
         );
