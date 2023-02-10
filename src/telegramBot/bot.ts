@@ -18,12 +18,25 @@ import { QueueTask, TypegramInlineQuery, TypegramMessage } from "./types";
 import { ServiceBroker } from "moleculer";
 import PQueue from "p-queue";
 import { getUniqueItemsByProperties } from "../utils";
+import { TypegramVoiceMessage } from "./types/TypegramMessage.type";
+import axios from "axios";
+import speech from "@google-cloud/speech";
+import { Storage } from "@google-cloud/storage";
+import googleKey from "../googleKey";
+import { Stream } from "stream";
+import { randomUUID } from "crypto";
 
 export default class TelegramBot {
   public bot: Telegraf;
   private redisClient: Redis;
   private limiter: RateLimiterRedis;
   private history: History;
+  private speech = new speech.SpeechClient({
+    credentials: googleKey,
+  });
+  private gcStorage = new Storage({
+    credentials: googleKey,
+  });
 
   private questionsQueue = new PQueue({
     concurrency: 1,
@@ -74,7 +87,121 @@ export default class TelegramBot {
       console.log("chosen inline result", chosenInlineResult);
     });
 
+    this.bot.on("voice", (ctx) => this.onVoiceMessage(ctx));
+
     this.bot.on("message", (ctx: any) => this.onMessage(ctx));
+  }
+
+  private async onVoiceMessage(ctx: TypegramVoiceMessage) {
+    const dialogKey = ctx.message.chat.id + "." + ctx.message.from.id;
+
+    const reqId = randomUUID();
+
+    if (
+      ctx.message.chat.id < 0 &&
+      (!ctx.message.reply_to_message ||
+        ctx.message.reply_to_message.from?.username !== TELEGRAM_BOT_USERNAME)
+    )
+      return;
+
+    // Rate limiter
+    try {
+      await this.limiter.consume(dialogKey, 1);
+      if (this.lastMessages.length + 1 > 5) this.lastMessages = [];
+      this.lastMessages.push(dialogKey);
+    } catch (e) {
+      if (this.lastMessages.filter((m) => m === dialogKey).length > 2)
+        await this.limiter.penalty(dialogKey, 5);
+      return await this.bot.telegram.sendMessage(
+        ctx.message.chat.id,
+        "⚠️ You are sending messages too fast. Please, wait a bit and try again later.",
+        {
+          reply_to_message_id: ctx.message.message_id,
+        }
+      );
+    }
+
+    try {
+      const { href: fileUrl } = await ctx.telegram.getFileLink(
+        ctx.message.voice.file_id
+      );
+
+      const { data: voiceMessageStream } = await axios(fileUrl, {
+        responseType: "arraybuffer",
+      });
+
+      // Create a reference to a file object
+      const file = this.gcStorage.bucket("ettie").file(reqId + ".oga");
+
+      // Create a pass through stream from a string
+      const passthroughStream = new Stream.PassThrough();
+      passthroughStream.write(voiceMessageStream);
+      passthroughStream.end();
+
+      await new Promise((r) =>
+        passthroughStream.pipe(file.createWriteStream()).on("finish", r)
+      );
+
+      const audio = {
+        uri: "gs://ettie/" + reqId + ".oga",
+      };
+
+      const config = {
+        encoding: 6,
+        sampleRateHertz: 48000,
+        languageCode: "ru-RU",
+      };
+      const request = {
+        audio: audio,
+        config: config,
+      };
+
+      // Detects speech in the audio file
+      const [response] = await this.speech.recognize(request);
+
+      await file.delete();
+
+      if (!response.results) {
+        console.error("err");
+        return;
+      }
+
+      let text = response.results
+        .map((result) => result.alternatives?.[0].transcript)
+        .join("\n");
+
+      console.log(`Transcription: ${text}`);
+
+      // Check what message have a text
+      if (!text || text.length > 150) return false;
+
+      // Push a task to queue and retreive response
+      const res = await this.questionsQueue.add(
+        async () =>
+          await this._pullToQueue({
+            question: text,
+            ctx: {
+              chatId: ctx.chat.id,
+              userId: ctx.message.from.id,
+              messageId: ctx.message.message_id,
+              workerParams: {}, // todo: add worker params
+            },
+          })
+      );
+
+      if (!res?.question) return false;
+
+      // Push question to history
+      await this.history.push(dialogKey, {
+        question: res.question.questionEN,
+        answer: res.answer.textEN,
+      });
+
+      return true;
+    } catch (error) {
+      console.log(error);
+      ctx.telegram.sendMessage(ctx.message.chat.id, "Something went wrong");
+    }
   }
 
   private async onMessage(ctx: TypegramMessage) {

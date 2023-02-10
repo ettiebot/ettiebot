@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@google-cloud/speech": "^5.3.0",
+    "@google-cloud/storage": "^6.9.2",
     "@xmldom/xmldom": "^0.8.6",
     "aios": "^1.0.1",
     "appdata-path": "^1.0.0",

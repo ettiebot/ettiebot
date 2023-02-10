@@ -72,3 +72,5 @@ history.yaml
 build
 
 build/*
+
+src/googleKey.ts
