@@ -13,3 +13,10 @@ export type TypegramInlineQuery = NarrowedContext<
   Context<Update>,
   Update.InlineQueryUpdate
 >;
+export type TypegramVoiceMessage = NarrowedContext<
+  Context<Update>,
+  {
+    message: Update.New & Update.NonChannel & Message.VoiceMessage;
+    update_id: number;
+  }
+>;
