@@ -191,7 +191,7 @@ export default async function onVoiceMessage(
 				.then(async (result) => {
 					this.logger.info("[onVoiceMessage] Inquirer response", result);
 					const aliceResult = result as InquirerActionAliceResponse;
-					if (!user.onlyTTS) {
+					if (!user.ttsEnabled || !user.onlyTTS) {
 						await send(result, user.provider === "yc");
 					}
 					if (user.ttsEnabled) {

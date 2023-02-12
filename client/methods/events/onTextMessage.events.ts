@@ -147,7 +147,7 @@ export default async function onTextMessage(
 			.then(async (result) => {
 				this.logger.info("[onTextMessage] Inquirer response", result);
 				const aliceResult = result as InquirerActionAliceResponse;
-				if (!user.onlyTTS) {
+				if (!user.ttsEnabled || !user.onlyTTS) {
 					await send(result, user.provider === "yc");
 				}
 				if (user.ttsEnabled) {
