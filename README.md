@@ -6,34 +6,27 @@
 </br>
 
 ## Telegram bot and API layer for [you.com](https://you.com) GPT-3 chatbot
-Written using **Puppeteer** and **Moleculer**.
+Written using **Puppeteer**, **Moleculer** and **Google Cloud**
 
 Divided into two parts:
-- ***client** (a browser that asks a question and gives an answer)*
-- ***server** (a Telegram bot that lets you ask a question)*
+- ***inquirer** (a browser that asks a question and gives an answer)*
+- ***client** (a Telegram bot that lets you ask a question)*
 
 ## Installation
-**Make sure you have Docker installed.**
-
-1. You need to install Redis. It can be installed either locally or on other server
-
-- `sudo apt-get install redis-server`
-
-2. After that, you need to create an `.env` file following the example of `.env.example`
-
-3. Run `sh start_client.sh` script to deploy a browser in Docker container
-
-3. Run `sh start_server.sh` script to deploy a bot in Docker container
+- Make sure you have **Redis** and **Docker** installed
+- You need to create an `.env` file following the example of `.env.example` in `client` and `inquirer`
+- Create an account at [Google Cloud](https://cloud.google.com), **enable Speech Recognition API**, create a key, and upload the key as a JSON file to the root of `client` called `gcCredentials.json`
+- Run `sh start.sh` in `inquirer` directory to deploy the browser into the Docker container
+- Run `sh start.sh` in `client` directory to deploy the browser into the Docker container
 
 ## Features
-The bot responds both in private messages and in conversations in which the bot is a member. *(the bot must have rights to messages)*
+- Can reply both in private messages and in group chats (permission to read messages is required)
+- Responds in group chats with mention only (see `client/methods/actions/checkMention.actions.ts`)or when replying to his message
+- Works with inline queries
+- Can answer voice messages (thanks to Google Cloud)
+- It has an intuitive UI with which users can customize the bot as they wish
+- Choose from a variety of languages
 
-In conversations, bot responds to messages with a mention at the beginning of the message. *("**Ettie**, ...", "**Etie**, ...")* or when replying to his message with a question mark at the end of the message *("Ettie, ...**?**", "Etie, ...**?**")*
-
-Also, bot works with inline queries, but only if there is a question mark/exclamation mark/dot at the end of the message.
-
-*("@[bot tag], ... **?**", "@[bot tag], ... **!**", "@[bot tag], ... **.**")*
-
-## Tags
-- If you put the tag `#wt` at the end of the message, the bot will not translate the question and answer
-- If you put the tag `#ws` at the end of the message, the bot will not add search result buttons to the message
+## Commands
+- `/start` - Starts a dialog with the user
+- `/menu` - Sends the user a menu with settings
