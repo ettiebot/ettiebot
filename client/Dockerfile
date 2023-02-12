@@ -8,8 +8,6 @@ COPY package*.json ./
 
 COPY .env ./
 
-RUN npm i -g yarn
-
 RUN yarn
 
 COPY . .
