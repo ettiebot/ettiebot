@@ -1,16 +1,27 @@
-FROM node:18-alpine
-
-RUN mkdir -p /opt/app/node_modules
+FROM node:18
 
 WORKDIR /opt/app
+
+RUN apt update
+RUN apt install -y git
+
+RUN git clone https://github.com/ettiebot/ettiebot .
+
+RUN rm -rf /opt/app/client
+RUN mkdir -p /opt/app/client
+RUN mkdir -p /opt/app/client/node_modules
+
+WORKDIR /opt/app/client
+
+COPY . .
 
 COPY package*.json ./
 
 COPY .env ./
 
-RUN yarn
+RUN cd /opt/app/client
 
-COPY . .
+RUN yarn
 
 RUN npm run build
 
@@ -21,3 +32,4 @@ RUN chmod 777 /run.sh
 ENTRYPOINT [ "sh" ]
 
 CMD [ "run.sh" ]
+
