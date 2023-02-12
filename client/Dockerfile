@@ -8,7 +8,9 @@ COPY package*.json ./
 
 COPY .env ./
 
-RUN npm install
+RUN npm i -g yarn
+
+RUN yarn
 
 COPY . .
 
