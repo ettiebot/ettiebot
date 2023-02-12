@@ -1,7 +1,7 @@
 enum LanguageEnum {
 	"ru" = "ru-RU",
 	"en" = "en-US",
-	"ua" = "ua-UA",
+	"ua" = "uk-UA",
 }
 
 type UserLanguage = "ru" | "en" | "ua";
