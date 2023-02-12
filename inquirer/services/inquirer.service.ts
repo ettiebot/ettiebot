@@ -7,6 +7,8 @@ import type {
 	InquirerActionResponse,
 	InquirerHistory,
 } from "../typings/Inquirer.typings";
+import type { UserLanguage } from "../typings/Language.typings";
+import { YandexLanguageEnum } from "../typings/Language.typings";
 import type { TranslateResponse } from "../typings/Translate.typings";
 import type { YouChatAPIResponse } from "../typings/YouChatLogic.typings";
 
@@ -55,7 +57,9 @@ const InquirerService: ServiceSchema<void> = {
 					// Translating question to English
 					const qEnglish: TranslateResponse = await ctx.call("Translate.execute", {
 						text: ctx.params.q,
-						from: ctx.params.lang ?? "auto",
+						from: ctx.params.lang
+							? YandexLanguageEnum[ctx.params.lang as UserLanguage]
+							: "auto",
 						to: "en",
 					});
 

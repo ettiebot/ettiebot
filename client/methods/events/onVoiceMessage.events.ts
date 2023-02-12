@@ -226,6 +226,7 @@ export default async function onVoiceMessage(
 					return null;
 				});
 		} catch (error) {
+			this.logger.error("[onVoiceMessage] catch", error);
 			void this.bot.editMessageText(i18next.t("errors.unknown"), {
 				message_id: message.message_id,
 				chat_id: chatId,
