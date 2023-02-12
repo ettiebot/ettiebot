@@ -30,14 +30,14 @@ export default function renderKeyboard(
 					callback_data: "changeLang",
 				},
 			],
-			[
-				{
-					text: i18next.t("mainMenu.subBtn", {
-						lng: user.lang,
-					}),
-					callback_data: "mainMenu:sub",
-				},
-			],
+			// [
+			// 	{
+			// 		text: i18next.t("mainMenu.subBtn", {
+			// 			lng: user.lang,
+			// 		}),
+			// 		callback_data: "mainMenu:sub",
+			// 	},
+			// ],
 		];
 	}
 	if (act === "lang") {
