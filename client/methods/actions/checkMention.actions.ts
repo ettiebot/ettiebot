@@ -4,4 +4,3 @@ export default function checkMention(text: string | undefined): string[] | null 
 		text?.split(" ")[0].match(/(етти|ети|йети|йетти)(,?\s?)/giu)
 	);
 }
-//
