@@ -1,4 +1,3 @@
-import type { InquirerActionResponse } from "@inquirer/typings/Inquirer.typings";
 import i18next from "i18next";
 import type { InlineQueryResultArticle } from "node-telegram-bot-api";
 import type TelegramBot from "node-telegram-bot-api";
@@ -8,6 +7,7 @@ import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
 import type { User } from "../../typings/User.typings";
 import clearMessageText from "../../utils/clearMessageText.utils";
 import { doRateLimiter } from "../actions";
+import onInquirerJob from "./onInquirerJob.events";
 
 export default async function onInlineQuery(
 	this: TelegramBotThis,
@@ -55,42 +55,42 @@ export default async function onInlineQuery(
 		// Set rate limit
 		await this.broker.cacher?.set(`${msg.from?.id}:l`, true, 10);
 
-		const job = await this.inquirer.createJob({ text, uid }).timeout(30000).retries(2).save();
+		const send = (data: InlineQueryResultArticle[]) => this.bot.answerInlineQuery(msg.id, data);
 
-		job.once("succeeded", (result: InquirerActionResponse) => {
-			const results: InlineQueryResultArticle[] = [
-				{
-					type: "article",
-					id: "air",
-					title: i18next.t("inline.sendResult", {
-						lng: msg.from?.language_code ?? "en",
-					}),
-					description: result.text,
-					input_message_content: {
-						message_text: result.text,
-					},
-				},
-				...result.externalSearch.map(
-					(search, i): InlineQueryResultArticle => ({
+		await this.inquirer
+			.add(() => onInquirerJob.bind(this)({ text, uid }))
+			.then((result) => {
+				const results: InlineQueryResultArticle[] = [
+					{
 						type: "article",
-						id: `sr${i}`,
-						title: i18next.t("inline.sendSearch", {
+						id: "air",
+						title: i18next.t("inline.sendResult", {
 							lng: msg.from?.language_code ?? "en",
 						}),
-						description: `${search.name} - ${search.url}`,
+						description: result.text,
 						input_message_content: {
-							message_text: `${search.name} - ${search.url}`,
+							message_text: result.text,
 						},
-					}),
-				),
-			];
-
-			void this.bot.answerInlineQuery(msg.id, results);
-		});
-
-		job.once("failed", (err: Error) => {
-			this.logger.error("JOB FAILURE", err);
-			void this.bot.answerInlineQuery(msg.id, []);
-		});
+					},
+					...result.externalSearch.map(
+						(search, i): InlineQueryResultArticle => ({
+							type: "article",
+							id: `sr${i}`,
+							title: i18next.t("inline.sendSearch", {
+								lng: msg.from?.language_code ?? "en",
+							}),
+							description: `${search.name} - ${search.url}`,
+							input_message_content: {
+								message_text: `${search.name} - ${search.url}`,
+							},
+						}),
+					),
+				];
+				return send(results);
+			})
+			.catch((error) => {
+				this.logger.error("JOB FAILURE", error);
+				return send([]);
+			});
 	}
 }

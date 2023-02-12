@@ -5,7 +5,7 @@ export default {
 		text: "Hello, {{name}}! My name is Ettie. I can help you with various tasks, from answering simple questions to providing detailed explanations and discussions on various topics.You can talk to me about anything and get clear and relevant answers.You can configure me using the buttons below so that I can help you better. Or we can start communicating, just ask me a question.",
 	},
 
-	MainMenu: {
+	mainMenu: {
 		translatorBtn: "🌍 Translator",
 		historyBtn: "📚 History",
 		subBtn: "💸 Subscription",

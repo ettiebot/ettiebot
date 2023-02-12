@@ -20,6 +20,7 @@ export default async function onMainMenuBtn(
 				replace: { name: msg.from?.first_name },
 			}),
 			{
+				reply_to_message_id: msg.message_id,
 				reply_markup: {
 					inline_keyboard: renderKeyboard(user, "mainMenu"),
 				},

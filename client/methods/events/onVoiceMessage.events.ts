@@ -10,6 +10,7 @@ import clearAnswerText from "../../utils/clearAnswerText.utils";
 import clearMessageText from "../../utils/clearMessageText.utils";
 import { doRateLimiter } from "../actions";
 import renderKeyboard from "../actions/renderKeyboard.actions";
+import onInquirerJob from "./onInquirerJob.events";
 
 export default async function onVoiceMessage(
 	this: TelegramBotThis,
@@ -108,30 +109,25 @@ export default async function onVoiceMessage(
 				return;
 			}
 
-			// Create job
-			const job = await this.inquirer
-				.createJob({ text, uid })
-				.timeout(30000)
-				.retries(2)
-				.save();
-
-			job.once("succeeded", (result: InquirerActionResponse) => {
-				void this.bot.editMessageText(clearAnswerText(result.text), {
+			const send = (result: InquirerActionResponse) =>
+				this.bot.editMessageText(clearAnswerText(result.text), {
 					message_id: message.message_id,
 					chat_id: chatId,
 					reply_markup: {
 						inline_keyboard: renderKeyboard(user, "searchResults", result),
 					},
 				});
-			});
 
-			job.once("failed", (err: Error) => {
-				this.logger.error(err);
-				void this.bot.editMessageText(i18next.t("errors.unknown", { lng: user.lang }), {
-					message_id: message.message_id,
-					chat_id: chatId,
-				});
-			});
+			await this.inquirer
+				.add(() => onInquirerJob.bind(this)({ text, uid }))
+				.then(send)
+				.catch(() =>
+					send({
+						text: i18next.t("errors.unknown", { lng: user.lang }),
+						search: [],
+						externalSearch: [],
+					}),
+				);
 		} catch (error) {
 			void this.bot.editMessageText(i18next.t("errors.unknown"), {
 				message_id: message.message_id,

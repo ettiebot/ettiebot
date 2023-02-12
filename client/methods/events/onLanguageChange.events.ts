@@ -10,6 +10,8 @@ export default async function onChangeLanguage(
 	lang: string,
 	chat: TelegramBot.Chat | undefined,
 	from: TelegramBot.User | undefined,
+	messageId?: number | undefined,
+	replyId?: number | undefined,
 ): Promise<void> {
 	const chatId = Number(chat?.id);
 	const uid = `${chatId}.${from?.id}`;
@@ -27,18 +29,35 @@ export default async function onChangeLanguage(
 	// 	reply_markup: { inline_keyboard: [] },
 	// });
 
-	await this.bot.sendMessage(
-		chatId,
-		i18next.t("welcome.text", {
-			lng: user.lang,
-			replace: { name: from?.first_name },
-		}),
-		{
-			reply_markup: {
-				inline_keyboard: renderKeyboard(user, "mainMenu"),
+	if (messageId) {
+		await this.bot.editMessageText(
+			i18next.t("welcome.text", {
+				lng: user.lang,
+				replace: { name: from?.first_name },
+			}),
+			{
+				chat_id: chatId,
+				message_id: messageId,
+				reply_markup: {
+					inline_keyboard: renderKeyboard(user, "mainMenu"),
+				},
 			},
-		},
-	);
+		);
+	} else {
+		await this.bot.sendMessage(
+			chatId,
+			i18next.t("welcome.text", {
+				lng: user.lang,
+				replace: { name: from?.first_name },
+			}),
+			{
+				reply_to_message_id: replyId,
+				reply_markup: {
+					inline_keyboard: renderKeyboard(user, "mainMenu"),
+				},
+			},
+		);
+	}
 
 	await this.broker.cacher?.set(uid, user);
 }

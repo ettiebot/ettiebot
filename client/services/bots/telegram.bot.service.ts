@@ -2,16 +2,20 @@
 import { readFileSync } from "fs";
 import { SpeechClient } from "@google-cloud/speech";
 import { Storage } from "@google-cloud/storage";
-import BeeQueue from "bee-queue";
 import i18next from "i18next";
 import type { Service, ServiceSchema } from "moleculer";
 import TelegramBot from "node-telegram-bot-api";
+import PQueue from "p-queue";
 import * as langs from "../../i18n";
 import * as methods from "../../methods";
-import type { InquirerJobPayload } from "../../typings/Inquirer.typings";
 
 interface TelegramBotSettings {
-	inquirerQueue: BeeQueue.QueueSettings;
+	inquirerQueue: {
+		concurrency: number;
+		timeout: number;
+		interval: number;
+		intervalCap: number;
+	};
 }
 
 interface TelegramBotMethods {
@@ -20,7 +24,7 @@ interface TelegramBotMethods {
 
 interface TelegramBotLocalVars {
 	bot: TelegramBot;
-	inquirer: BeeQueue<InquirerJobPayload>;
+	inquirer: PQueue;
 	gcSpeech: SpeechClient;
 	gcStorage: Storage;
 }
@@ -34,10 +38,10 @@ const TelegramBotService: ServiceSchema<TelegramBotSettings> = {
 
 	settings: {
 		inquirerQueue: {
-			prefix: "etclinq",
-			redis: process.env.CACHER,
-			removeOnSuccess: false,
-			removeOnFailure: true,
+			concurrency: 2,
+			timeout: 30 * 1000,
+			interval: 5 * 1000,
+			intervalCap: 1,
 		},
 	},
 
@@ -78,8 +82,7 @@ const TelegramBotService: ServiceSchema<TelegramBotSettings> = {
 			},
 		});
 		// Init Inquirer queue
-		this.inquirer = new BeeQueue("inquirer", this.settings.inquirerQueue);
-		this.inquirer.process(methods.onInquirerJob.bind(this));
+		this.inquirer = new PQueue(this.settings.inquirerQueue);
 		// Init Google Cloud
 		const credentials = JSON.parse(readFileSync("gcCredentials.json", "utf-8"));
 		this.gcSpeech = new SpeechClient({

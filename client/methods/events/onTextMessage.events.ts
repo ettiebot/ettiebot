@@ -8,6 +8,8 @@ import clearAnswerText from "../../utils/clearAnswerText.utils";
 import clearMessageText from "../../utils/clearMessageText.utils";
 import { checkMention, doRateLimiter } from "../actions";
 import renderKeyboard from "../actions/renderKeyboard.actions";
+import onInquirerJob from "./onInquirerJob.events";
+import onChangeLanguage from "./onLanguageChange.events";
 
 export default async function onTextMessage(
 	this: TelegramBotThis,
@@ -56,31 +58,32 @@ export default async function onTextMessage(
 			},
 		);
 
-		const job = await this.inquirer.createJob({ text, uid }).timeout(30000).retries(2).save();
-
-		job.once("succeeded", (result: InquirerActionResponse) => {
-			void this.bot.editMessageText(clearAnswerText(result.text), {
+		const send = (result: InquirerActionResponse) =>
+			this.bot.editMessageText(clearAnswerText(result.text), {
 				message_id: message.message_id,
 				chat_id: `${msg.chat.id}`,
 				reply_markup: {
 					inline_keyboard: renderKeyboard(user, "searchResults", result),
 				},
 			});
-		});
 
-		job.once("failed", (err: Error) => {
-			this.logger.error("JOB FAILURE", err);
-			void this.bot.editMessageText(i18next.t("errors.unknown", { lng: user.lang }), {
-				message_id: message.message_id,
-				chat_id: `${msg.chat.id}`,
-			});
-		});
+		await this.inquirer
+			.add(() => onInquirerJob.bind(this)({ text, uid }))
+			.then(send)
+			.catch(() =>
+				send({
+					text: i18next.t("errors.unknown", { lng: user.lang }),
+					search: [],
+					externalSearch: [],
+				}),
+			);
 	} else if (!user && (mentioned || msg.chat.id > 0)) {
-		await this.bot.sendMessage(msg.chat.id, "Choose language", {
-			reply_to_message_id: msg.message_id,
-			reply_markup: {
-				inline_keyboard: renderKeyboard(user, "lang"),
-			},
-		});
+		await onChangeLanguage.bind(this)(
+			String(msg.from?.language_code) ?? "en",
+			msg.chat,
+			msg.from,
+			undefined,
+			msg.message_id,
+		);
 	}
 }

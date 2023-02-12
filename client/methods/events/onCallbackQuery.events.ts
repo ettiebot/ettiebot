@@ -15,8 +15,7 @@ export default async function onCallbackQuery(
 
 	if (
 		!msg.data ||
-		(msg.message?.from?.username !== process.env.TELEGRAM_BOT_USERNAME &&
-			msg.from.id !== msg.message?.from?.id)
+		(msg.message?.reply_to_message && msg.message?.reply_to_message.from?.id !== msg.from?.id)
 	) {
 		return;
 	}
@@ -24,7 +23,12 @@ export default async function onCallbackQuery(
 	const [cmd, payload, ...args] = msg.data.split(":");
 
 	if (cmd === "lang") {
-		await onChangeLanguage.bind(this)(payload, msg.message?.chat, msg.from);
+		await onChangeLanguage.bind(this)(
+			payload,
+			msg.message?.chat,
+			msg.from,
+			msg.message?.message_id,
+		);
 	} else if (cmd === "changeLang" && user) {
 		await this.bot.editMessageText("Choose language", {
 			message_id: msg.message?.message_id,
