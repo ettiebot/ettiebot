@@ -42,9 +42,9 @@ const TelegramBotService: ServiceSchema<TelegramBotSettings> = {
 
 	settings: {
 		inquirerQueue: {
-			concurrency: 2,
-			timeout: 30 * 1000,
-			interval: 5 * 1000,
+			concurrency: 1,
+			timeout: 40 * 1000,
+			interval: 3 * 1000,
 			intervalCap: 1,
 		},
 	},

@@ -74,6 +74,7 @@ export default async function onInlineQuery(
 				}),
 			)
 			.then((res) => {
+				this.logger.info("[onInlineQuery] Inquirer response", res);
 				const result = res as InquirerActionResponse;
 				const results: InlineQueryResultArticle[] = [
 					{

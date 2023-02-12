@@ -189,6 +189,7 @@ export default async function onVoiceMessage(
 					}),
 				)
 				.then(async (result) => {
+					this.logger.info("[onVoiceMessage] Inquirer response", result);
 					const aliceResult = result as InquirerActionAliceResponse;
 					if (!user.onlyTTS) {
 						await send(result, user.provider === "yc");
@@ -204,12 +205,25 @@ export default async function onVoiceMessage(
 					}
 				})
 				.catch((error) => {
-					this.logger.error(error);
-					return send({
-						text: i18next.t("errors.unknown", { lng: user.lang }),
-						search: [],
-						externalSearch: [],
-					});
+					if (error.code === "VOICE_ERROR" || error.code === "TTS_ERROR") {
+						void this.bot.sendMessage(
+							chatId,
+							i18next.t("errors.tts", { lng: user.lang }),
+							{
+								reply_to_message_id: msg.message_id,
+							},
+						);
+						void this.bot.deleteMessage(chatId, `${message.message_id}`);
+					} else {
+						this.logger.error(error);
+						return send({
+							text: i18next.t("errors.unknown", { lng: user.lang }),
+							search: [],
+							externalSearch: [],
+						});
+					}
+
+					return null;
 				});
 		} catch (error) {
 			void this.bot.editMessageText(i18next.t("errors.unknown"), {

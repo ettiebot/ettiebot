@@ -62,3 +62,6 @@ jspm_packages/
 
 # Don't track transpiled files
 dist/
+
+# Yarn lock file
+yarn.lock
