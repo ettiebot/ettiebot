@@ -2,7 +2,8 @@ import type { InquirerHistory } from "@inquirer/typings/Inquirer.typings";
 import i18next from "i18next";
 import type TelegramBot from "node-telegram-bot-api";
 import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
-import type { User } from "../../typings/User.typings";
+import type { User, UserProviders } from "../../typings/User.typings";
+import { ProvidersName } from "../../typings/User.typings";
 import renderKeyboard from "../actions/renderKeyboard.actions";
 
 export default async function onMainMenu(
@@ -102,8 +103,82 @@ export default async function onMainMenu(
 				},
 			},
 		);
-	} else if (btn === "sub") {
-		//
+	} else if (btn === "provider") {
+		const changeState = args[0];
+		if (changeState) {
+			user.provider = changeState as UserProviders;
+		}
+
+		await this.bot.editMessageText(
+			i18next.t("mainMenu.provider", {
+				lng: user.lang,
+				replace: { provider: ProvidersName[user.provider] },
+			}),
+			{
+				message_id: messageId,
+				chat_id: chatId,
+				reply_markup: {
+					inline_keyboard: [
+						[
+							{
+								text: i18next.t("basic.change", {
+									lng: user.lang,
+								}),
+								callback_data: `mainMenu:provider:${
+									user.provider === "yc" ? "al" : "yc"
+								}`,
+							},
+							{
+								text: i18next.t("basic.backBtn", {
+									lng: user.lang,
+								}),
+								callback_data: "mainMenu:back",
+							},
+						],
+					],
+				},
+			},
+		);
+	} else if (btn === "tts") {
+		const changeState = args[0];
+		const onlyTTS = args[1];
+		if (changeState) {
+			user.ttsEnabled = changeState !== "0";
+			if (onlyTTS) {
+				user.onlyTTS = onlyTTS !== "0";
+			}
+		}
+
+		await this.bot.editMessageText(i18next.t("mainMenu.tts", { lng: user.lang }), {
+			message_id: messageId,
+			chat_id: chatId,
+			reply_markup: {
+				inline_keyboard: [
+					[
+						{
+							text: i18next.t(user.ttsEnabled ? "basic.enabled" : "basic.disabled", {
+								lng: user.lang,
+							}),
+							callback_data: `mainMenu:tts:${user.ttsEnabled ? 0 : 1}`,
+						},
+						{
+							text: i18next.t(user.onlyTTS ? "basic.onlyTTS" : "basic.textWithTTS", {
+								lng: user.lang,
+							}),
+							callback_data: `mainMenu:tts:${user.ttsEnabled}:${
+								user.onlyTTS ? 0 : 1
+							}`,
+						},
+						{
+							text: i18next.t("basic.backBtn", {
+								lng: user.lang,
+							}),
+							callback_data: "mainMenu:back",
+						},
+					],
+				],
+			},
+		});
 	} else if (btn === "back" || !btn) {
 		await this.bot.editMessageText(
 			i18next.t("basic.menuPlaceholder", {
@@ -119,6 +194,10 @@ export default async function onMainMenu(
 			},
 		);
 	}
+
+	// else if (btn === "sub") {
+	// 	//
+	// }
 
 	await this.broker.cacher?.set(uid, user);
 }

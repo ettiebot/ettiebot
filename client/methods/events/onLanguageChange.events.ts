@@ -19,9 +19,12 @@ export default async function onChangeLanguage(
 
 	user.lang = lang as UserLanguage;
 
-	if (Object.keys(user).length === 0 || !user) {
+	if (Object.keys(user).length === 0 || !user || !user.provider) {
 		user.translatorEnabled = true;
 		user.historyEnabled = true;
+		user.ttsEnabled = false;
+		user.onlyTTS = false;
+		user.provider = "yc";
 	}
 
 	// await this.bot.editMessageText(i18next.t("languageChanged", { lng: user.lang }), {

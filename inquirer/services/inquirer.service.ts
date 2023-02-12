@@ -1,5 +1,8 @@
 import type { Context, Service, ServiceSchema } from "moleculer";
+import YandexAliceClient from "yandex-alice-client";
 import type {
+	InquirerActionAliceExecuteParams,
+	InquirerActionAliceResponse,
 	InquirerActionExecuteParams,
 	InquirerActionResponse,
 	InquirerHistory,
@@ -7,7 +10,7 @@ import type {
 import type { TranslateResponse } from "../typings/Translate.typings";
 import type { YouChatAPIResponse } from "../typings/YouChatLogic.typings";
 
-type InquirerThis = Service<void>;
+type InquirerThis = Service<void>; // & { alice: YandexAliceClient };
 
 const InquirerService: ServiceSchema<void> = {
 	name: "Inquirer",
@@ -114,13 +117,118 @@ const InquirerService: ServiceSchema<void> = {
 				};
 			},
 		},
+
+		executeAlice: {
+			params: {
+				q: "string",
+				uid: "string",
+				tts: "boolean",
+				lang: "string",
+			},
+			async handler(
+				this: InquirerThis,
+				ctx: Context<InquirerActionAliceExecuteParams>,
+			): Promise<InquirerActionAliceResponse | undefined> {
+				this.logger.info("exec alice tts", ctx.params);
+
+				const alice = new YandexAliceClient();
+				await alice.connect();
+
+				// Get history from cache
+				let history =
+					((await ctx.broker.cacher?.get(`${ctx.params.uid}.h`)) as InquirerHistory[]) ??
+					([] as InquirerHistory[]);
+
+				// Convert history to YouChat format
+				let ycHistory = history.map((h) => ({
+					question: h.q.norm[0],
+					answer: h.a.norm[0],
+				}));
+
+				// If history is too long, clear it
+				if (JSON.stringify(ycHistory).length > 300) {
+					history = [];
+					ycHistory = [];
+				}
+
+				try {
+					// Translating question to English
+					const qRus: TranslateResponse = await ctx.call("Translate.execute", {
+						text: ctx.params.q,
+						from: ctx.params.lang ?? "auto",
+						to: "ru",
+					});
+
+					// Asking question
+					const aliceTextRes = (await alice.sendText(qRus.text)) as {
+						response: { card: { text: string } };
+					};
+					const aliceAPIResponse = aliceTextRes.response.card.text;
+
+					// Translating answer to English
+					const aEng: TranslateResponse = await ctx.call("Translate.execute", {
+						text: aliceAPIResponse,
+						from: "ru",
+						to: qRus.from,
+					});
+
+					const { text } = aEng;
+
+					const audio = async (): Promise<{ audio?: Buffer | undefined }> => {
+						this.logger.info("LANG", ctx.params.lang);
+						if (ctx.params.tts) {
+							if (ctx.params.lang === "ru") {
+								return alice.sendText(qRus.text, {
+									isTTS: true,
+								});
+							}
+							return { audio: await alice.tts(text) };
+						}
+						return { audio: undefined };
+					};
+					const { audio: aliceAPIResponseTTS } = await audio();
+					this.logger.info(aliceTextRes, aliceAPIResponseTTS);
+
+					// Add question to history
+					history.push({
+						q: {
+							orig: [ctx.params.q, qRus.from],
+							norm: [qRus.text, qRus.to],
+						},
+						a: {
+							orig: [text, qRus.from],
+							norm: [qRus.text, qRus.to],
+						},
+					});
+
+					// Save history to cache
+					await ctx.broker.cacher?.set(`${ctx.params.uid}.h`, history);
+
+					alice.close();
+
+					return {
+						text,
+						audio: aliceAPIResponseTTS,
+					};
+				} catch (error) {
+					this.logger.error(error);
+					alice.close();
+					throw new Error("Unknown error");
+				}
+			},
+		},
 	},
 
-	created(this: InquirerThis) {},
+	created(this: InquirerThis) {
+		// Handle unhandled rejections
+		process.on("unhandledRejection", (err, promise) => {
+			this.logger.error("Unhandled rejection (promise: ", promise, ", reason: ", err, ").");
+		});
+	},
 	started(this: InquirerThis) {
 		this.logger.info("Inquirer service started.");
 	},
-	async stopped(this: InquirerThis) {},
+	stopped(this: InquirerThis) {},
 };
 
 export default InquirerService;

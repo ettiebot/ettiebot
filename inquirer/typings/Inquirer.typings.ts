@@ -17,6 +17,18 @@ export interface InquirerActionResponse {
 	externalSearch: ThirdPartySearchResult[];
 }
 
+export interface InquirerActionAliceResponse {
+	text: string;
+	audio: Buffer | undefined;
+}
+
+export interface InquirerActionAliceExecuteParams {
+	q: string;
+	uid: string;
+	tts: boolean;
+	lang: string;
+}
+
 export interface InquirerActionExecuteParams {
 	q: string;
 	needTranslate: boolean;

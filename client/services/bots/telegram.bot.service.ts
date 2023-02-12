@@ -2,10 +2,12 @@
 import { readFileSync } from "fs";
 import { SpeechClient } from "@google-cloud/speech";
 import { Storage } from "@google-cloud/storage";
+import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import i18next from "i18next";
 import type { Service, ServiceSchema } from "moleculer";
 import TelegramBot from "node-telegram-bot-api";
 import PQueue from "p-queue";
+import AliceClient from "yandex-alice-client";
 import * as langs from "../../i18n";
 import * as methods from "../../methods";
 
@@ -27,6 +29,8 @@ interface TelegramBotLocalVars {
 	inquirer: PQueue;
 	gcSpeech: SpeechClient;
 	gcStorage: Storage;
+	gcTTS: TextToSpeechClient;
+	alice: AliceClient;
 }
 
 export type TelegramBotThis = Service<TelegramBotSettings> &
@@ -83,13 +87,27 @@ const TelegramBotService: ServiceSchema<TelegramBotSettings> = {
 		});
 		// Init Inquirer queue
 		this.inquirer = new PQueue(this.settings.inquirerQueue);
-		// Init Google Cloud
+		// Init Google Cloud client
 		const credentials = JSON.parse(readFileSync("gcCredentials.json", "utf-8"));
 		this.gcSpeech = new SpeechClient({
 			credentials,
 		});
 		this.gcStorage = new Storage({
 			credentials,
+		});
+		this.gcTTS = new TextToSpeechClient({
+			credentials,
+		});
+		// Alice
+		this.alice = new AliceClient();
+		await this.alice.connect();
+
+		// Handle unhandled rejections
+		process.on("unhandledRejection", (err, promise) => {
+			this.logger.error("Unhandled rejection (promise: ", promise, ", reason: ", err, ").");
+			this.alice.close();
+			this.alice = new AliceClient();
+			void this.alice.connect();
 		});
 	},
 
@@ -99,6 +117,7 @@ const TelegramBotService: ServiceSchema<TelegramBotSettings> = {
 
 	async stopped(this: TelegramBotThis) {
 		await this.bot.stopPolling();
+		this.alice.close();
 	},
 };
 

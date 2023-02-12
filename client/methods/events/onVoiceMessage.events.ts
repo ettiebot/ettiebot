@@ -1,4 +1,7 @@
-import type { InquirerActionResponse } from "@inquirer/typings/Inquirer.typings";
+import type {
+	InquirerActionAliceResponse,
+	InquirerActionResponse,
+} from "@inquirer/typings/Inquirer.typings";
 import axios from "axios";
 import i18next from "i18next";
 import type TelegramBot from "node-telegram-bot-api";
@@ -10,6 +13,7 @@ import clearAnswerText from "../../utils/clearAnswerText.utils";
 import clearMessageText from "../../utils/clearMessageText.utils";
 import { doRateLimiter } from "../actions";
 import renderKeyboard from "../actions/renderKeyboard.actions";
+import tts from "../actions/tts.actions";
 import onInquirerJob from "./onInquirerJob.events";
 
 export default async function onVoiceMessage(
@@ -115,25 +119,93 @@ export default async function onVoiceMessage(
 				return;
 			}
 
-			const send = (result: InquirerActionResponse) =>
-				this.bot.editMessageText(clearAnswerText(result.text), {
-					message_id: message.message_id,
-					chat_id: chatId,
-					reply_markup: {
-						inline_keyboard: renderKeyboard(user, "searchResults", result),
-					},
-				});
+			const send = async (
+				result: InquirerActionResponse | InquirerActionAliceResponse,
+				isYC = true,
+			) => {
+				if (isYC) {
+					const res = result as InquirerActionResponse;
+					await this.bot.editMessageText(clearAnswerText(result.text), {
+						message_id: message.message_id,
+						chat_id: chatId,
+						reply_markup: {
+							inline_keyboard: isYC ? renderKeyboard(user, "searchResults", res) : [],
+						},
+					});
+				} else {
+					await this.bot.editMessageText(clearAnswerText(result.text), {
+						message_id: message.message_id,
+						chat_id: chatId,
+						reply_markup: {
+							inline_keyboard: renderKeyboard(user, "delBtn"),
+						},
+					});
+				}
+			};
+
+			const sendVoice = async (
+				result: InquirerActionResponse | InquirerActionAliceResponse,
+				isYC = true,
+			) => {
+				if (isYC) {
+					const voiceFile = await tts.bind(this)(result.text, user.lang ?? "en");
+					if (!voiceFile) {
+						this.logger.info("voice is empty", voiceFile);
+						return;
+					}
+
+					await this.bot.sendVoice(chatId, Buffer.from(voiceFile), {
+						reply_to_message_id: messageId,
+						reply_markup: {
+							inline_keyboard: renderKeyboard(
+								user,
+								"searchResults",
+								result as InquirerActionResponse,
+							),
+						},
+					});
+				} else {
+					const voiceFile = (result as InquirerActionAliceResponse).audio;
+					if (!voiceFile) {
+						return;
+					}
+
+					await this.bot.sendVoice(chatId, voiceFile, {
+						reply_to_message_id: messageId,
+						reply_markup: {
+							inline_keyboard: renderKeyboard(user, "delBtn"),
+						},
+					});
+				}
+			};
 
 			await this.inquirer
-				.add(() => onInquirerJob.bind(this)({ text, uid }))
-				.then(send)
-				.catch(() =>
-					send({
+				.add(() =>
+					onInquirerJob.bind(this)({
+						text,
+						uid,
+						provider: user.provider,
+						tts: user.ttsEnabled,
+					}),
+				)
+				.then(async (result) => {
+					const aliceResult = result as InquirerActionAliceResponse;
+					await send(result, !aliceResult.audio);
+					if (user.ttsEnabled) {
+						await sendVoice(
+							aliceResult.audio ? aliceResult : result,
+							!aliceResult.audio,
+						);
+					}
+				})
+				.catch((error) => {
+					this.logger.error(error);
+					return send({
 						text: i18next.t("errors.unknown", { lng: user.lang }),
 						search: [],
 						externalSearch: [],
-					}),
-				);
+					});
+				});
 		} catch (error) {
 			void this.bot.editMessageText(i18next.t("errors.unknown"), {
 				message_id: message.message_id,

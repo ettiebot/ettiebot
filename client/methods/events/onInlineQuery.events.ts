@@ -1,3 +1,4 @@
+import type { InquirerActionResponse } from "@inquirer/typings/Inquirer.typings";
 import i18next from "i18next";
 import type { InlineQueryResultArticle } from "node-telegram-bot-api";
 import type TelegramBot from "node-telegram-bot-api";
@@ -64,8 +65,16 @@ export default async function onInlineQuery(
 		const send = (data: InlineQueryResultArticle[]) => this.bot.answerInlineQuery(msg.id, data);
 
 		await this.inquirer
-			.add(() => onInquirerJob.bind(this)({ text, uid }))
-			.then((result) => {
+			.add(() =>
+				onInquirerJob.bind(this)({
+					text,
+					uid,
+					provider: user.provider,
+					tts: user.ttsEnabled,
+				}),
+			)
+			.then((res) => {
+				const result = res as InquirerActionResponse;
 				const results: InlineQueryResultArticle[] = [
 					{
 						type: "article",

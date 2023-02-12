@@ -32,6 +32,18 @@ export default function renderKeyboard(
 			],
 			[
 				{
+					text: i18next.t("mainMenu.providerBtn", {
+						lng: user.lang,
+					}),
+					callback_data: "mainMenu:provider",
+				},
+				{
+					text: i18next.t("mainMenu.ttsBtn", {
+						lng: user.lang,
+					}),
+					callback_data: "mainMenu:tts",
+				},
+				{
 					text: i18next.t("mainMenu.delBtn", {
 						lng: user.lang,
 					}),
@@ -71,6 +83,18 @@ export default function renderKeyboard(
 		}));
 		return [
 			btns,
+			[
+				{
+					text: i18next.t("mainMenu.delBtn", {
+						lng: user.lang,
+					}),
+					callback_data: "deleteMsg",
+				},
+			],
+		];
+	}
+	if (act === "delBtn") {
+		return [
 			[
 				{
 					text: i18next.t("mainMenu.delBtn", {
