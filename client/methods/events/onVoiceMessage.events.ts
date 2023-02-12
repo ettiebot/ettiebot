@@ -190,12 +190,17 @@ export default async function onVoiceMessage(
 				)
 				.then(async (result) => {
 					const aliceResult = result as InquirerActionAliceResponse;
-					await send(result, !aliceResult.audio);
+					if (!user.onlyTTS) {
+						await send(result, user.provider === "yc");
+					}
 					if (user.ttsEnabled) {
 						await sendVoice(
 							aliceResult.audio ? aliceResult : result,
 							!aliceResult.audio,
 						);
+						if (user.onlyTTS) {
+							await this.bot.deleteMessage(chatId, `${message.message_id}`);
+						}
 					}
 				})
 				.catch((error) => {

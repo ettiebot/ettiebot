@@ -147,7 +147,7 @@ export default async function onTextMessage(
 			.then(async (result) => {
 				const aliceResult = result as InquirerActionAliceResponse;
 				if (!user.onlyTTS) {
-					await send(result, !aliceResult.audio);
+					await send(result, user.provider === "yc");
 				}
 				if (user.ttsEnabled) {
 					await sendVoice(aliceResult.audio ? aliceResult : result, !aliceResult.audio);
