@@ -24,7 +24,7 @@ export default async function onCallbackQuery(
 	const [cmd, payload, ...args] = msg.data.split(":");
 
 	if (cmd === "lang") {
-		await onChangeLanguage.bind(this)(payload, msg);
+		await onChangeLanguage.bind(this)(payload, msg.message?.chat, msg.from);
 	} else if (cmd === "changeLang" && user) {
 		await this.bot.editMessageText("Choose language", {
 			message_id: msg.message?.message_id,

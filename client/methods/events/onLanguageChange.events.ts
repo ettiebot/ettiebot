@@ -8,27 +8,30 @@ import renderKeyboard from "../actions/renderKeyboard.actions";
 export default async function onChangeLanguage(
 	this: TelegramBotThis,
 	lang: string,
-	msg: TelegramBot.CallbackQuery,
+	chat: TelegramBot.Chat | undefined,
+	from: TelegramBot.User | undefined,
 ): Promise<void> {
-	const chatId = Number(msg.message?.chat.id);
-	const uid = `${chatId}.${msg.from?.id}`;
+	const chatId = Number(chat?.id);
+	const uid = `${chatId}.${from?.id}`;
 	const user = ((await this.broker.cacher?.get(uid)) as User) ?? {};
 
 	user.lang = lang as UserLanguage;
-	user.translatorEnabled = true;
-	user.historyEnabled = true;
+	if (Object.keys(user).length === 0) {
+		user.translatorEnabled = true;
+		user.historyEnabled = true;
+	}
 
-	await this.bot.editMessageText(i18next.t("languageChanged", { lng: user.lang }), {
-		message_id: msg.message?.message_id,
-		chat_id: `${chatId}`,
-		reply_markup: { inline_keyboard: [] },
-	});
+	// await this.bot.editMessageText(i18next.t("languageChanged", { lng: user.lang }), {
+	// 	message_id: msg.message?.message_id,
+	// 	chat_id: `${chatId}`,
+	// 	reply_markup: { inline_keyboard: [] },
+	// });
 
 	await this.bot.sendMessage(
 		chatId,
 		i18next.t("welcome.text", {
 			lng: user.lang,
-			replace: { name: msg.from.first_name },
+			replace: { name: from?.first_name },
 		}),
 		{
 			reply_markup: {
