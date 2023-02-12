@@ -18,7 +18,8 @@ export default async function onChangeLanguage(
 	const user = ((await this.broker.cacher?.get(uid)) as User) ?? {};
 
 	user.lang = lang as UserLanguage;
-	if (Object.keys(user).length === 0) {
+
+	if (Object.keys(user).length === 0 || !user) {
 		user.translatorEnabled = true;
 		user.historyEnabled = true;
 	}
