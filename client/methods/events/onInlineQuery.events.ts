@@ -36,8 +36,9 @@ export default async function onInlineQuery(
 		]);
 	} else {
 		// Check rate limit
-		await doRateLimiter
+		const rateSuccess = await doRateLimiter
 			.bind(this)(msg.from?.id)
+			.then(() => true)
 			.catch(async (error: ClientError) => {
 				const errorText = errorToText(error, msg.from?.language_code ?? "en");
 				await this.bot.answerInlineQuery(msg.id, [
@@ -50,7 +51,12 @@ export default async function onInlineQuery(
 						},
 					},
 				]);
+				return false;
 			});
+
+		if (!rateSuccess) {
+			return;
+		}
 
 		// Set rate limit
 		await this.broker.cacher?.set(`${msg.from?.id}:l`, true, 10);

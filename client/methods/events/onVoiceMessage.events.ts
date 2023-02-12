@@ -36,13 +36,19 @@ export default async function onVoiceMessage(
 		}
 
 		// Check rate limit
-		await doRateLimiter
+		const rateSuccess = await doRateLimiter
 			.bind(this)(msg.from?.id)
+			.then(() => true)
 			.catch((e: ClientError) => {
 				void this.bot.sendMessage(msg.chat.id, errorToText(e, user.lang), {
 					reply_to_message_id: msg.message_id,
 				});
+				return false;
 			});
+
+		if (!rateSuccess) {
+			return;
+		}
 
 		// Send message
 		const message = await this.bot.sendMessage(
