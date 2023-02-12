@@ -17,7 +17,7 @@ Divided into two parts:
 - You need to create an `.env` file following the example of `.env.example` in `client` and `inquirer`
 - Create an account at [Google Cloud](https://cloud.google.com), **enable Speech Recognition API**, create a key, and upload the key as a JSON file to the root of `client` called `gcCredentials.json`
 - Run `sh start.sh` in `inquirer` directory to deploy the browser into the Docker container
-- Run `sh start.sh` in `client` directory to deploy the browser into the Docker container
+- Run `sh start.sh` in `client` directory to deploy the bot into the Docker container
 
 ## Features
 - Can reply both in private messages and in group chats (permission to read messages is required)
