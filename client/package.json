@@ -4,7 +4,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "dev": "ts-node ./node_modules/moleculer/bin/moleculer-runner.js --config moleculer.config.ts --hot --repl services/**/*.service.ts --env",
-    "start": "moleculer-runner --config dist/moleculer.config.js --repl services/**/*.service.js --env",
+    "start": "moleculer-runner --config dist/client/moleculer.config.js --repl dist/client/services/**/*.service.js --env",
     "test:types": "concurrently npm:prettier npm:lint npm:typecheck",
     "typecheck": "tsc --noEmit && echo \"tsc: no typecheck errors\"",
     "ci": "jest --watch",
