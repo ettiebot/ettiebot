@@ -37,6 +37,8 @@ export default async function onCallbackQuery(
 				inline_keyboard: renderKeyboard(user, "lang"),
 			},
 		});
+	} else if (cmd === "deleteMsg" && user) {
+		await this.bot.deleteMessage(chatId, String(msg.message?.message_id));
 	} else if (cmd === "mainMenu" && user) {
 		await onMainMenu.bind(this)(payload, msg, args);
 	}

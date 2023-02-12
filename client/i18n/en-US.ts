@@ -11,6 +11,7 @@ export default {
 		subBtn: "💸 Subscription",
 		langBtn: "🗺 Language",
 		historyListBtn: "📜 Get history",
+		delBtn: "❌ Delete",
 		translate:
 			"I use a third-party translator and use it to translate your question into English, after which I translate my answer into your language.So I understand your questions better.If you want - you can enable or disable it.\n ⚠️ But keep in mind - there may be problems!",
 		history:

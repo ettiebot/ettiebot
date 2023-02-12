@@ -30,14 +30,20 @@ export default function renderKeyboard(
 					callback_data: "changeLang",
 				},
 			],
-			// [
-			// 	{
-			// 		text: i18next.t("mainMenu.subBtn", {
-			// 			lng: user.lang,
-			// 		}),
-			// 		callback_data: "mainMenu:sub",
-			// 	},
-			// ],
+			[
+				{
+					text: i18next.t("mainMenu.delBtn", {
+						lng: user.lang,
+					}),
+					callback_data: "deleteMsg",
+				},
+				// {
+				// 	text: i18next.t("mainMenu.subBtn", {
+				// 		lng: user.lang,
+				// 	}),
+				// 	callback_data: "mainMenu:sub",
+				// },
+			],
 		];
 	}
 	if (act === "lang") {
@@ -63,7 +69,17 @@ export default function renderKeyboard(
 			text: item.name,
 			url: item.url,
 		}));
-		return [btns];
+		return [
+			btns,
+			[
+				{
+					text: i18next.t("mainMenu.delBtn", {
+						lng: user.lang,
+					}),
+					callback_data: "deleteMsg",
+				},
+			],
+		];
 	}
 
 	return [];
