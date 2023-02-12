@@ -83,7 +83,7 @@ export default async function onTextMessage(
 					externalSearch: [],
 				}),
 			);
-	} else if (!user && (mentioned || msg.chat.id > 0)) {
+	} else if (!user && (mentioned || msg.chat.id > 0) && msg.text?.[0] !== "/") {
 		await onChangeLanguage.bind(this)(
 			String(msg.from?.language_code) ?? "en",
 			msg.chat,
