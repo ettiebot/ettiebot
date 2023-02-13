@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
+/* eslint-disable no-void */
 import type { Context, Service, ServiceSchema } from "moleculer";
-import YandexAliceClient from "yandex-alice-client";
+import AliceClient from "yandex-alice-client";
 import type {
 	InquirerActionAliceExecuteParams,
 	InquirerActionAliceResponse,
@@ -11,8 +13,9 @@ import type { UserLanguage } from "../typings/Language.typings";
 import { YandexLanguageEnum } from "../typings/Language.typings";
 import type { TranslateResponse } from "../typings/Translate.typings";
 import type { YouChatAPIResponse } from "../typings/YouChatLogic.typings";
+import clearAnswerText from "../utils/clearAnswerText.utils";
 
-type InquirerThis = Service<void>; // & { alice: YandexAliceClient };
+type InquirerThis = Service<void> & { alice: AliceClient };
 
 const InquirerService: ServiceSchema<void> = {
 	name: "Inquirer",
@@ -96,7 +99,7 @@ const InquirerService: ServiceSchema<void> = {
 						history: [],
 					});
 
-					text = ycAPIResponse.text;
+					text = clearAnswerText(ycAPIResponse.text);
 
 					// Add question to history
 					history.push({
@@ -135,8 +138,7 @@ const InquirerService: ServiceSchema<void> = {
 			): Promise<InquirerActionAliceResponse | undefined> {
 				this.logger.info("exec alice tts", ctx.params);
 
-				const alice = new YandexAliceClient();
-				await alice.connect();
+				await this.alice.connect();
 
 				// Get history from cache
 				let history =
@@ -164,7 +166,7 @@ const InquirerService: ServiceSchema<void> = {
 					});
 
 					// Asking question
-					const aliceTextRes = (await alice.sendText(qRus.text)) as {
+					const aliceTextRes = (await this.alice.sendText(qRus.text)) as {
 						response: { card: { text: string } };
 					};
 					const aliceAPIResponse = aliceTextRes.response.card.text;
@@ -176,17 +178,17 @@ const InquirerService: ServiceSchema<void> = {
 						to: qRus.from,
 					});
 
-					const { text } = aEng;
+					const text = clearAnswerText(aEng.text);
 
 					const audio = async (): Promise<{ audio?: Buffer | undefined }> => {
 						this.logger.info("LANG", ctx.params.lang);
 						if (ctx.params.tts) {
 							if (ctx.params.lang === "ru") {
-								return alice.sendText(qRus.text, {
+								return this.alice.sendText(qRus.text, {
 									isTTS: true,
 								});
 							}
-							return { audio: await alice.tts(text) };
+							return { audio: await this.alice.tts(text) };
 						}
 						return { audio: undefined };
 					};
@@ -208,31 +210,68 @@ const InquirerService: ServiceSchema<void> = {
 					// Save history to cache
 					await ctx.broker.cacher?.set(`${ctx.params.uid}.h`, history);
 
-					alice.close();
-
 					return {
 						text,
 						audio: aliceAPIResponseTTS,
 					};
 				} catch (error) {
 					this.logger.error(error);
-					alice.close();
 					throw new Error("Unknown error");
+				}
+			},
+		},
+
+		executeTTS: {
+			params: {
+				q: "string",
+			},
+			async handler(
+				this: InquirerThis,
+				ctx: Context<InquirerActionAliceExecuteParams>,
+			): Promise<InquirerActionAliceResponse | undefined> {
+				this.logger.info("exec alice tts", ctx.params);
+
+				try {
+					const aliceAPIResponseTTS = await this.alice.tts(ctx.params.q);
+					this.logger.info(aliceAPIResponseTTS);
+					return {
+						text: ctx.params.q,
+						audio: aliceAPIResponseTTS,
+					};
+				} catch (error) {
+					this.logger.error(error);
+					return undefined;
 				}
 			},
 		},
 	},
 
-	created(this: InquirerThis) {
+	async created(this: InquirerThis) {
+		// Alice
+		this.alice = new AliceClient();
+		await this.alice.connect();
+
 		// Handle unhandled rejections
 		process.on("unhandledRejection", (err, promise) => {
 			this.logger.error("Unhandled rejection (promise: ", promise, ", reason: ", err, ").");
+		});
+
+		process.on("uncaughtException", (error, origin) => {
+			this.logger.error("----- Uncaught exception -----");
+			this.logger.error(error);
+			this.logger.error("----- Exception origin -----");
+			this.logger.error(origin);
+			this.alice.close();
+			this.alice = new AliceClient();
+			void this.alice.connect();
 		});
 	},
 	started(this: InquirerThis) {
 		this.logger.info("Inquirer service started.");
 	},
-	stopped(this: InquirerThis) {},
+	stopped(this: InquirerThis) {
+		this.alice.close();
+	},
 };
 
 export default InquirerService;

@@ -102,12 +102,19 @@ const TelegramBotService: ServiceSchema<TelegramBotSettings> = {
 		this.alice = new AliceClient();
 		await this.alice.connect();
 
-		// Handle unhandled rejections
-		process.on("unhandledRejection", (err, promise) => {
-			this.logger.error("Unhandled rejection (promise: ", promise, ", reason: ", err, ").");
+		process.on("uncaughtException", (error, origin) => {
+			this.logger.error("----- Uncaught exception -----");
+			this.logger.error(error);
+			this.logger.error("----- Exception origin -----");
+			this.logger.error(origin);
 			this.alice.close();
 			this.alice = new AliceClient();
 			void this.alice.connect();
+		});
+
+		// Handle unhandled rejections
+		process.on("unhandledRejection", (err, promise) => {
+			this.logger.error("Unhandled rejection (promise: ", promise, ", reason: ", err, ").");
 		});
 	},
 
