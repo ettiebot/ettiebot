@@ -158,8 +158,6 @@ const InquirerService: ServiceSchema<void> = {
 			): Promise<InquirerActionAliceResponse | undefined> {
 				this.logger.info("exec alice tts", ctx.params);
 
-				await this.alice.connect();
-
 				// Get history from cache
 				let history =
 					((await ctx.broker.cacher?.get(`${ctx.params.uid}.h`)) as InquirerHistory[]) ??
