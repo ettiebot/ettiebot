@@ -3,6 +3,7 @@
 import type { Context, Service, ServiceSchema } from "moleculer";
 import AliceClient from "ya-alice-client";
 import type { IAliceActiveRequest } from "ya-alice-client/src/types";
+import weatherAppApply from "../logic/apps/weatherApp.apps";
 import type {
 	InquirerActionAliceExecuteParams,
 	InquirerActionAliceResponse,
@@ -74,6 +75,22 @@ const InquirerService: ServiceSchema<void> = {
 						q: qEnglish.text,
 						history: ycHistoryStr,
 					});
+
+					const { appData } = ycAPIResponse;
+					this.logger.info(appData);
+
+					if (appData) {
+						const weatherAppData = appData.find(
+							(appP) => appP.ydcAppName === "weather",
+						);
+						if (weatherAppData) {
+							ycAPIResponse.text = weatherAppApply(weatherAppData);
+							this.logger.info(
+								"[inquirerService] weather appData",
+								ycAPIResponse.text,
+							);
+						}
+					}
 
 					// Translating answer to English
 					const aEnglish: TranslateResponse = await ctx.call("Translate.execute", {
@@ -170,6 +187,8 @@ const InquirerService: ServiceSchema<void> = {
 
 					// Asking question
 					const aliceTextRes = await this.alice.sendText(qRus.text);
+					this.logger.info("[inquirerService] aliceTextRes", aliceTextRes);
+
 					const aliceAPIResponse = aliceTextRes.text?.text;
 
 					// Translating answer to English

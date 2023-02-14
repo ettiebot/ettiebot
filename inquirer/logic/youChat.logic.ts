@@ -49,7 +49,7 @@ export default class YouChatLogic {
 		>(
 			(uri) =>
 				new Promise((resolve, reject) => {
-					const data = { text: "", search: [], externalSearch: {} };
+					const data = { text: "", search: [], externalSearch: {}, appData: [] };
 					const rejectTimer = setTimeout(() => reject(new Error("Timeout")), 30000);
 					const es = new EventSource(uri);
 
@@ -64,6 +64,14 @@ export default class YouChatLogic {
 					es.addEventListener("youChatSerpResults", (e) => {
 						try {
 							data.search = JSON.parse(e.data).youChatSerpResults;
+						} catch (error) {
+							reject(error);
+						}
+					});
+
+					es.addEventListener("appData", (e) => {
+						try {
+							data.appData.push(JSON.parse(e.data) as never);
 						} catch (error) {
 							reject(error);
 						}

@@ -54,6 +54,7 @@ export class YandexTranslator extends BaseTranslator {
 	}
 
 	public async translate(text: string, from: langCodeWithAuto, to: langCode) {
+		console.info(text);
 		return this.translateBatch([text], from, to).then((resp) => resp[0]);
 	}
 
@@ -79,7 +80,6 @@ export class YandexTranslator extends BaseTranslator {
 			"https://translate.yandex.net/api/v1/tr.json/translate?srv=tr-url-widget&id=" +
 			sid +
 			"-0-0&";
-		console.info(urlWithSid + body, options);
 		return fetch(this.wrapUrlToCorsProxy(urlWithSid + body), {
 			method: "GET",
 			headers: {

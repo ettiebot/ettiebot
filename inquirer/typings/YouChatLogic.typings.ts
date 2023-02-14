@@ -1,3 +1,5 @@
+import type { WeatherAppRoot } from "../logic/apps/weatherApp.apps";
+
 export type LogicState = ["idle", "loaded", "error"];
 export type YCApiURLQueryOpts = {
 	q: string; // Query
@@ -18,6 +20,7 @@ export type YouChatAPIResponse = {
 	text: string;
 	search: Search[];
 	externalSearch: ExternalSearch;
+	appData: WeatherAppRoot[];
 };
 
 export interface Welcome1 {
