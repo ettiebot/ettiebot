@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable no-void */
+import AliceClient from "@alice/src/index";
+import type { IAliceActiveRequest } from "@alice/src/types";
 import type { Context, Service, ServiceSchema } from "moleculer";
-import AliceClient from "yandex-alice-client";
 import type {
 	InquirerActionAliceExecuteParams,
 	InquirerActionAliceResponse,
@@ -168,10 +169,8 @@ const InquirerService: ServiceSchema<void> = {
 					});
 
 					// Asking question
-					const aliceTextRes = (await this.alice.sendText(qRus.text)) as {
-						response: { card: { text: string } };
-					};
-					const aliceAPIResponse = aliceTextRes.response.card.text;
+					const aliceTextRes = await this.alice.sendText(qRus.text);
+					const aliceAPIResponse = aliceTextRes.text?.text;
 
 					// Translating answer to English
 					const aEng: TranslateResponse = await ctx.call("Translate.execute", {
@@ -182,19 +181,18 @@ const InquirerService: ServiceSchema<void> = {
 
 					const text = clearAnswerText(aEng.text);
 
-					const audio = async (): Promise<{ audio?: Buffer | undefined }> => {
-						this.logger.info("LANG", ctx.params.lang);
+					const audio = async (): Promise<IAliceActiveRequest> => {
 						if (ctx.params.tts) {
 							if (ctx.params.lang === "ru") {
 								return this.alice.sendText(qRus.text, {
 									isTTS: true,
 								});
 							}
-							return { audio: await this.alice.tts(text) };
+							return this.alice.tts(text);
 						}
-						return { audio: undefined };
+						return { audioData: undefined };
 					};
-					const { audio: aliceAPIResponseTTS } = await audio();
+					const { audioData: aliceAPIResponseTTS } = await audio();
 					this.logger.info(aliceTextRes, aliceAPIResponseTTS);
 
 					// Add question to history
@@ -238,7 +236,8 @@ const InquirerService: ServiceSchema<void> = {
 					this.logger.info(aliceAPIResponseTTS);
 					return {
 						text: ctx.params.q,
-						audio: aliceAPIResponseTTS,
+						audio: aliceAPIResponseTTS.audioData,
+						aliceData: { ...aliceAPIResponseTTS, audioData: undefined },
 					};
 				} catch (error) {
 					this.logger.error(error);
@@ -250,23 +249,13 @@ const InquirerService: ServiceSchema<void> = {
 
 	async created(this: InquirerThis) {
 		// Alice
-		this.alice = new AliceClient();
+		this.alice = new AliceClient({
+			log: true,
+			autoReconnect: true,
+			connTimeout: 10 * 1000,
+		});
+		await this.alice.initTTSVoice();
 		await this.alice.connect();
-
-		// Handle unhandled rejections
-		process.on("unhandledRejection", (err, promise) => {
-			this.logger.error("Unhandled rejection (promise: ", promise, ", reason: ", err, ").");
-		});
-
-		process.on("uncaughtException", (error, origin) => {
-			this.logger.error("----- Uncaught exception -----");
-			this.logger.error(error);
-			this.logger.error("----- Exception origin -----");
-			this.logger.error(origin);
-			this.alice.close();
-			this.alice = new AliceClient();
-			void this.alice.connect();
-		});
 	},
 	started(this: InquirerThis) {
 		this.logger.info("Inquirer service started.");

@@ -1,3 +1,4 @@
+import type { IAliceActiveRequest } from "@alice/src/types";
 import type { Search, ThirdPartySearchResult } from "./YouChatLogic.typings";
 
 export interface InquirerHistory {
@@ -20,6 +21,7 @@ export interface InquirerActionResponse {
 export interface InquirerActionAliceResponse {
 	text: string;
 	audio: Buffer | undefined;
+	aliceData?: IAliceActiveRequest;
 }
 
 export interface InquirerActionAliceExecuteParams {

@@ -1,3 +1,4 @@
+import type { IAliceActiveRequest } from "@alice/src/types";
 import type {
 	InquirerActionAliceResponse,
 	InquirerActionResponse,
@@ -7,13 +8,13 @@ import i18next from "i18next";
 import type TelegramBot from "node-telegram-bot-api";
 import { ClientError, errorToText } from "../../errors";
 import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
+import type { InquirerExecuteTTSPayload } from "../../typings/Inquirer.typings";
 import { LanguageEnum } from "../../typings/Language.typings";
 import type { User } from "../../typings/User.typings";
 import clearAnswerText from "../../utils/clearAnswerText.utils";
 import clearMessageText from "../../utils/clearMessageText.utils";
 import { doRateLimiter } from "../actions";
 import renderKeyboard from "../actions/renderKeyboard.actions";
-import tts from "../actions/tts.actions";
 import onInquirerJob from "./onInquirerJob.events";
 
 export default async function onVoiceMessage(
@@ -148,13 +149,18 @@ export default async function onVoiceMessage(
 				isYC = true,
 			) => {
 				if (isYC) {
-					const voiceFile = await tts.bind(this)(result.text, user.lang ?? "en");
-					if (!voiceFile) {
-						this.logger.info("voice is empty", voiceFile);
+					const { audioData } = await this.broker.call<
+						IAliceActiveRequest,
+						InquirerExecuteTTSPayload
+					>("Inqirer.executeTTS", {
+						q: clearAnswerText(result.text),
+					});
+					if (!audioData) {
+						this.logger.info("voice is empty", audioData);
 						return;
 					}
 
-					await this.bot.sendVoice(chatId, Buffer.from(voiceFile), {
+					await this.bot.sendVoice(chatId, audioData, {
 						reply_to_message_id: messageId,
 						reply_markup: {
 							inline_keyboard: renderKeyboard(

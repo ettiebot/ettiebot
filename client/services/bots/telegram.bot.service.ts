@@ -7,7 +7,6 @@ import i18next from "i18next";
 import type { Service, ServiceSchema } from "moleculer";
 import TelegramBot from "node-telegram-bot-api";
 import PQueue from "p-queue";
-import AliceClient from "yandex-alice-client";
 import * as langs from "../../i18n";
 import * as methods from "../../methods";
 
@@ -30,7 +29,6 @@ interface TelegramBotLocalVars {
 	gcSpeech: SpeechClient;
 	gcStorage: Storage;
 	gcTTS: TextToSpeechClient;
-	alice: AliceClient;
 }
 
 export type TelegramBotThis = Service<TelegramBotSettings> &
@@ -98,24 +96,6 @@ const TelegramBotService: ServiceSchema<TelegramBotSettings> = {
 		this.gcTTS = new TextToSpeechClient({
 			credentials,
 		});
-		// Alice
-		this.alice = new AliceClient();
-		await this.alice.connect();
-
-		process.on("uncaughtException", (error, origin) => {
-			this.logger.error("----- Uncaught exception -----");
-			this.logger.error(error);
-			this.logger.error("----- Exception origin -----");
-			this.logger.error(origin);
-			this.alice.close();
-			this.alice = new AliceClient();
-			void this.alice.connect();
-		});
-
-		// Handle unhandled rejections
-		process.on("unhandledRejection", (err, promise) => {
-			this.logger.error("Unhandled rejection (promise: ", promise, ", reason: ", err, ").");
-		});
 	},
 
 	started(this: TelegramBotThis) {
@@ -124,7 +104,6 @@ const TelegramBotService: ServiceSchema<TelegramBotSettings> = {
 
 	async stopped(this: TelegramBotThis) {
 		await this.bot.stopPolling();
-		this.alice.close();
 	},
 };
 

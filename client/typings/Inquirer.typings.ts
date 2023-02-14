@@ -4,3 +4,7 @@ export interface InquirerJobPayload {
 	provider: string;
 	tts: boolean;
 }
+
+export interface InquirerExecuteTTSPayload {
+	q: string;
+}
