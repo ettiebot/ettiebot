@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable no-void */
 import type { Context, Service, ServiceSchema } from "moleculer";
-import AliceClient from "ya-alice-client/src/index";
+import AliceClient from "ya-alice-client";
 import type { IAliceActiveRequest } from "ya-alice-client/src/types";
 import type {
 	InquirerActionAliceExecuteParams,
