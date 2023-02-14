@@ -149,18 +149,18 @@ export default async function onVoiceMessage(
 				isYC = true,
 			) => {
 				if (isYC) {
-					const { audioData } = await this.broker.call<
-						IAliceActiveRequest,
+					const { audio } = await this.broker.call<
+						InquirerActionAliceResponse,
 						InquirerExecuteTTSPayload
 					>("Inquirer.executeTTS", {
 						q: clearAnswerText(result.text),
 					});
-					if (!audioData) {
-						this.logger.info("voice is empty", audioData);
+					if (!audio) {
+						this.logger.info("voice is empty", audio);
 						return;
 					}
 
-					await this.bot.sendVoice(chatId, audioData, {
+					await this.bot.sendVoice(chatId, audio, {
 						reply_to_message_id: messageId,
 						reply_markup: {
 							inline_keyboard: renderKeyboard(
