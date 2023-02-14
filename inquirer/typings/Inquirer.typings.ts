@@ -1,4 +1,4 @@
-import type { IAliceActiveRequest } from "@alice/src/types";
+import type { IAliceActiveRequest } from "ya-alice-client/src/types";
 import type { Search, ThirdPartySearchResult } from "./YouChatLogic.typings";
 
 export interface InquirerHistory {
