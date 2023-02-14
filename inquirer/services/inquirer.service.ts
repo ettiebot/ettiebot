@@ -254,8 +254,8 @@ const InquirerService: ServiceSchema<void> = {
 			autoReconnect: true,
 			connTimeout: 10 * 1000,
 		});
-		await this.alice.initTTSVoice();
 		await this.alice.connect();
+		await this.alice.initTTSVoice();
 	},
 	started(this: InquirerThis) {
 		this.logger.info("Inquirer service started.");
