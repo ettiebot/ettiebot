@@ -20,6 +20,9 @@ RUN yarn
 
 COPY . .
 
+ARG PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 RUN npm run build
 
 RUN chmod -R o+rwx node_modules/puppeteer/
