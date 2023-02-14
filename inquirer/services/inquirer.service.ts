@@ -47,11 +47,11 @@ const InquirerService: ServiceSchema<void> = {
 				// Convert history to YouChat format
 				let ycHistory = history.map((h) => ({
 					question: h.q.norm[0],
-					answer: h.a.norm[0],
+					answer: h.a.orig[0],
 				}));
 
 				// If history is too long, clear it
-				if (JSON.stringify(ycHistory).length > 300) {
+				if (JSON.stringify(ycHistory).length > 4000) {
 					history = [];
 					ycHistory = [];
 				}
@@ -85,7 +85,7 @@ const InquirerService: ServiceSchema<void> = {
 					history.push({
 						q: {
 							orig: [ctx.params.q, qEnglish.from],
-							norm: [aEnglish.text, qEnglish.to],
+							norm: [qEnglish.text, qEnglish.to],
 						},
 						a: {
 							orig: [ycAPIResponse.text, aEnglish.from],
@@ -152,7 +152,7 @@ const InquirerService: ServiceSchema<void> = {
 				}));
 
 				// If history is too long, clear it
-				if (JSON.stringify(ycHistory).length > 300) {
+				if (JSON.stringify(ycHistory).length > 4000) {
 					history = [];
 					ycHistory = [];
 				}
