@@ -1,5 +1,3 @@
-import type { InquirerHistory } from "./Inquirer.typings";
-
 export type LogicState = ["idle", "loaded", "error"];
 export type YCApiURLQueryOpts = {
 	q: string; // Query
@@ -10,7 +8,7 @@ export type YCApiURLQueryOpts = {
 	responseFilter?: string; // Response filter
 	domain?: string; // Domain
 	queryTraceId?: string; // Query trace id
-	history?: InquirerHistory[] | string; // History
+	history?: string; // History
 };
 export type RunPayload = {
 	q: string; // Query
