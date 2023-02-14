@@ -152,7 +152,7 @@ export default async function onVoiceMessage(
 					const { audioData } = await this.broker.call<
 						IAliceActiveRequest,
 						InquirerExecuteTTSPayload
-					>("Inqirer.executeTTS", {
+					>("Inquirer.executeTTS", {
 						q: clearAnswerText(result.text),
 					});
 					if (!audioData) {
