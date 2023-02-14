@@ -79,7 +79,7 @@ export class YandexTranslator extends BaseTranslator {
 			"https://translate.yandex.net/api/v1/tr.json/translate?srv=tr-url-widget&id=" +
 			sid +
 			"-0-0&";
-		console.info(urlWithSid + body, textChunk, options);
+		console.info(urlWithSid + body, options);
 		return fetch(this.wrapUrlToCorsProxy(urlWithSid + body), {
 			method: "GET",
 			headers: {
