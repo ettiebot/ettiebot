@@ -4,7 +4,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "dev": "ts-node ./node_modules/moleculer/bin/moleculer-runner.js --config moleculer.config.ts --hot --repl services/**/*.service.ts --env",
-    "start": "moleculer-runner --config dist/moleculer.config.js --repl dist/services/**/*.service.js --env"
+    "start": "moleculer-runner --config dist/inquirer/moleculer.config.js --repl dist/inquirer/services/**/*.service.js --env"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",

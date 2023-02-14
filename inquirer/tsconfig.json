@@ -67,7 +67,7 @@
     // "declarationDir": "./",                           /* Specify the output directory for generated declaration files. */
     // "preserveValueImports": true,                     /* Preserve unused imported values in the JavaScript output that would otherwise be removed. */
     "paths": {
-      "@alice/*": ["../yandex-alice-client/*"]
+      "@alice/*": ["../yandex-alice-client/*", "./dist/yandex-alice-client/*"]
     },
     /* Interop Constraints */
     // "isolatedModules": true,                          /* Ensure that each file can be safely transpiled without relying on other imports. */
