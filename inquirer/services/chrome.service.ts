@@ -3,12 +3,11 @@ import type { Context, Service, ServiceSchema } from "moleculer";
 import puppeteer from "puppeteer";
 import type { Browser } from "puppeteer";
 import YouChatLogic from "../logic/youChat.logic";
-import type { InquirerHistory } from "../typings/Inquirer.typings";
 import type { YouChatAPIResponse } from "../typings/YouChatLogic.typings";
 
 export interface ActionExecuteParams {
 	q: string;
-	history: InquirerHistory[];
+	history: string;
 }
 
 interface ChromeSettings {
@@ -58,7 +57,7 @@ const ChromeService: ServiceSchema<ChromeSettings> = {
 		execute: {
 			params: {
 				q: "string",
-				history: "array",
+				history: "string",
 			},
 			async handler(
 				this: ChromeThis,

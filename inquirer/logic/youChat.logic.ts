@@ -170,7 +170,7 @@ export default class YouChatLogic {
 			domain: "youchat",
 			queryTraceId: randomUUID(),
 			...payload,
-			history: typeof payload.history === "object" ? JSON.stringify(payload.history) : "[]",
+			history: encodeURIComponent(payload.history),
 		};
 
 		const str = Object.entries(opts)

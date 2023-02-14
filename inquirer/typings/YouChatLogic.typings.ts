@@ -14,7 +14,7 @@ export type YCApiURLQueryOpts = {
 };
 export type RunPayload = {
 	q: string; // Query
-	history: InquirerHistory[]; // History
+	history: string; // History
 };
 export type YouChatAPIResponse = {
 	text: string;

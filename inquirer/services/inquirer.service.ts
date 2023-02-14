@@ -50,8 +50,10 @@ const InquirerService: ServiceSchema<void> = {
 					answer: h.a.orig[0],
 				}));
 
+				const ycHistoryStr = JSON.stringify(ycHistory);
+
 				// If history is too long, clear it
-				if (JSON.stringify(ycHistory).length > 4000) {
+				if (ycHistoryStr.length > 4000) {
 					history = [];
 					ycHistory = [];
 				}
@@ -69,7 +71,7 @@ const InquirerService: ServiceSchema<void> = {
 					// Asking question
 					ycAPIResponse = await ctx.call("Chrome.execute", {
 						q: qEnglish.text,
-						history: ycHistory,
+						history: ycHistoryStr,
 					});
 
 					// Translating answer to English
