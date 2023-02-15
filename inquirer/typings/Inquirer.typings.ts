@@ -1,4 +1,5 @@
 import type { IAliceActiveRequest } from "ya-alice-client/src/types";
+import type { UserLanguage } from "./Language.typings";
 import type { Search, ThirdPartySearchResult } from "./YouChatLogic.typings";
 
 export interface InquirerHistory {
@@ -35,6 +36,6 @@ export interface InquirerActionExecuteParams {
 	q: string;
 	needTranslate: boolean;
 	uid: string;
-	lang?: string;
+	lang: UserLanguage;
 	chatId: string;
 }
