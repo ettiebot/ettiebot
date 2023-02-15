@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type {
 	InquirerActionAliceExecuteParams,
 	InquirerActionAliceResponse,
@@ -27,6 +28,11 @@ export default async function onInquirerJob(
 			});
 		}
 
+		if (!user.ycId) {
+			user.ycId = randomUUID();
+			await this.broker.cacher?.set(uid, user);
+		}
+
 		return await this.broker.call<InquirerActionResponse, InquirerActionExecuteParams>(
 			"Inquirer.execute",
 			{
@@ -34,6 +40,7 @@ export default async function onInquirerJob(
 				needTranslate: user.translatorEnabled,
 				uid,
 				lang: user.lang,
+				chatId: user.ycId,
 			},
 		);
 	} catch (error) {

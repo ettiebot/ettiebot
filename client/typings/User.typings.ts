@@ -14,6 +14,7 @@ export interface User {
 	ttsEnabled: boolean;
 	onlyTTS: boolean;
 	provider: UserProviders;
+	ycId?: string;
 }
 
 export const languages = ["en", "ru", "ua"] as const;

@@ -8,6 +8,47 @@ import type {
 	YouChatAPIResponse,
 } from "../typings/YouChatLogic.typings";
 
+const resolveRequest = async (url: string) => {
+	const $r = await new Promise((resolve, reject) => {
+		const data = { text: "", search: [], slots: [], externalSearch: {}, appData: [] };
+		const es = new EventSource(url);
+
+		es.addEventListener("slots", (e) => {
+			data.slots = JSON.parse(e.data).slot_dictionary;
+		});
+
+		es.addEventListener("youChatToken", (e) => {
+			data.text += JSON.parse(e.data).youChatToken;
+		});
+
+		es.addEventListener("done", () => {
+			es.close();
+			data.text = data.text.trim();
+			resolve(data as never);
+		});
+
+		es.addEventListener("thirdPartySearchResults", (e) => {
+			data.externalSearch = JSON.parse(e.data).search;
+		});
+
+		es.addEventListener("youChatSerpResults", (e) => {
+			data.search = JSON.parse(e.data).youChatSerpResults;
+		});
+
+		es.addEventListener("appData", (e) => {
+			data.appData.push(JSON.parse(e.data) as never);
+		});
+
+		es.onerror = (e) => {
+			console.error(e);
+			es.close();
+			reject(e);
+		};
+	});
+
+	return $r;
+};
+
 export default class YouChatLogic {
 	private browser: Browser;
 
@@ -40,62 +81,16 @@ export default class YouChatLogic {
 		const url = this.getYCApiUrl({
 			q: payload.q,
 			history: payload.history,
+			chatId: payload.history.length > 2 ? payload.chatId : undefined,
 		});
 
 		// Get YouChat API response
-		const response = await this.page.evaluate<
-			[string],
-			(uri: string) => Promise<YouChatAPIResponse>
-		>(
-			(uri) =>
-				new Promise((resolve, reject) => {
-					const data = { text: "", search: [], externalSearch: {}, appData: [] };
-					const rejectTimer = setTimeout(() => reject(new Error("Timeout")), 30000);
-					const es = new EventSource(uri);
-
-					es.addEventListener("thirdPartySearchResults", (e) => {
-						try {
-							data.externalSearch = JSON.parse(e.data).search;
-						} catch (error) {
-							reject(error);
-						}
-					});
-
-					es.addEventListener("youChatSerpResults", (e) => {
-						try {
-							data.search = JSON.parse(e.data).youChatSerpResults;
-						} catch (error) {
-							reject(error);
-						}
-					});
-
-					es.addEventListener("appData", (e) => {
-						try {
-							data.appData.push(JSON.parse(e.data) as never);
-						} catch (error) {
-							reject(error);
-						}
-					});
-
-					es.addEventListener("youChatToken", (e) => {
-						try {
-							data.text += JSON.parse(e.data).youChatToken;
-						} catch (error) {
-							reject(error);
-						}
-					});
-
-					es.addEventListener("done", () => {
-						clearTimeout(rejectTimer);
-						es.close();
-						data.text = data.text.trim();
-						resolve(data as never);
-					});
-				}),
+		// eslint-disable-next-line
+		return (await this.page.evaluate(
+			// eslint-disable-next-line
+			resolveRequest,
 			url,
-		);
-
-		return response;
+		)) as unknown as YouChatAPIResponse;
 	}
 
 	async init(): Promise<void> {
@@ -108,6 +103,10 @@ export default class YouChatLogic {
 		});
 		// Do checks
 		await this.waitPageForLoad();
+	}
+
+	async exposeResolver(): Promise<void> {
+		await this.page?.exposeFunction("resolveRequest", resolveRequest);
 	}
 
 	async waitPageForLoad(): Promise<void> {
@@ -162,28 +161,32 @@ export default class YouChatLogic {
 
 		// Wait for YouChat page selector
 		await this.page.waitForSelector(this.selectors.ycPage, { timeout: 30000 });
+		await this.exposeResolver();
 	}
 
-	stop(): void {
+	async stop(): Promise<void> {
 		this.state = "idle" as unknown as LogicState;
+		await this.browser.close();
 	}
 
 	private getYCApiUrl(payload: YCApiURLQueryOpts) {
 		const opts: YCApiURLQueryOpts = {
 			page: 1,
 			count: 3,
-			safeSearch: false,
+			safeSearch: "Off",
 			onShoppingPage: false,
-			responseFilter: "WebPages",
+			mkt: "",
+			responseFilter: "WebPages,Translations,TimeZone,Computation,RelatedSearches",
 			domain: "youchat",
-			queryTraceId: randomUUID(),
+			queryTraceId: payload.chatId ?? randomUUID(),
 			...payload,
+			chatId: payload.history && payload.history.length > 2 ? payload.chatId : undefined,
 			history: encodeURIComponent(payload.history ?? "[]"),
 		};
 
 		const str = Object.entries(opts)
 			.map(([key, val]) => `${key}=${val}`)
 			.join("&");
-		return `${this.ycPageUrl}/streamingSearch/?${str}`;
+		return `${this.ycPageUrl}/streamingSearch?${str}`;
 	}
 }

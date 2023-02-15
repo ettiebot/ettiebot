@@ -36,4 +36,5 @@ export interface InquirerActionExecuteParams {
 	needTranslate: boolean;
 	uid: string;
 	lang?: string;
+	chatId: string;
 }

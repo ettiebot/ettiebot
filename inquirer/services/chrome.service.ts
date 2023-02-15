@@ -8,6 +8,7 @@ import type { YouChatAPIResponse } from "../typings/YouChatLogic.typings";
 export interface ActionExecuteParams {
 	q: string;
 	history: string;
+	chatId: string;
 }
 
 interface ChromeSettings {
@@ -57,7 +58,11 @@ const ChromeService: ServiceSchema<ChromeSettings> = {
 		execute: {
 			params: {
 				q: "string",
-				history: "string",
+				history: {
+					type: "string",
+					default: "[]",
+				},
+				chatId: "string",
 			},
 			async handler(
 				this: ChromeThis,
@@ -70,35 +75,35 @@ const ChromeService: ServiceSchema<ChromeSettings> = {
 
 	methods: {
 		// Start browser
-		async startBrowser() {
+		async startBrowser(this: ChromeThis) {
 			this.browser = await puppeteer.launch(this.settings.browser);
-			await this.listenEvents();
+			this.listenEvents();
 			await this.initLogic();
 			this.logger.info("Browser is ready");
 		},
 
 		// Init logic classes
-		async initLogic() {
+		async initLogic(this: ChromeThis) {
 			// Init YouChat logic
 			this.youChatLogic = new YouChatLogic(this.browser);
 			await this.youChatLogic.init();
 		},
 
 		// Listen browser events
-		listenEvents() {
+		listenEvents(this: ChromeThis) {
 			// Listen for browser disconnection
 			this.browser.once("disconnected", () => {
 				this.logger.error("Re-running browser...");
-				this.startBrowser();
+				// eslint-disable-next-line no-void
+				void this.startBrowser();
 			});
 		},
 
 		// Stop browser
-		async stopBrowser() {
+		async stopBrowser(this: ChromeThis) {
 			// Stop YouChat logic
-			this.youChatLogic.stop();
-			// Close Chrome process
-			await this.browser.close();
+			// eslint-disable-next-line @typescript-eslint/await-thenable
+			await this.youChatLogic.stop();
 		},
 	},
 

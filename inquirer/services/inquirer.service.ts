@@ -3,7 +3,10 @@
 import type { Context, Service, ServiceSchema } from "moleculer";
 import AliceClient from "ya-alice-client";
 import type { IAliceActiveRequest } from "ya-alice-client/src/types";
+import type { WeatherAppRoot } from "../logic/apps/weatherApp.apps";
 import weatherAppApply from "../logic/apps/weatherApp.apps";
+import type { WikipediaAppRoot } from "../logic/apps/wikipediaApp.apps";
+import wikipediaAppApply from "../logic/apps/wikipediaApp.apps";
 import type {
 	InquirerActionAliceExecuteParams,
 	InquirerActionAliceResponse,
@@ -16,6 +19,7 @@ import { YandexLanguageEnum } from "../typings/Language.typings";
 import type { TranslateResponse } from "../typings/Translate.typings";
 import type { YouChatAPIResponse } from "../typings/YouChatLogic.typings";
 import clearAnswerText from "../utils/clearAnswerText.utils";
+import type { ActionExecuteParams } from "./chrome.service";
 
 type InquirerThis = Service<void> & { alice: AliceClient };
 
@@ -31,6 +35,7 @@ const InquirerService: ServiceSchema<void> = {
 					default: true,
 				},
 				uid: "string",
+				chatId: "string",
 			},
 			async handler(
 				this: InquirerThis,
@@ -42,23 +47,22 @@ const InquirerService: ServiceSchema<void> = {
 				let ycAPIResponse: YouChatAPIResponse;
 
 				// Get history from cache
-				let history =
+				const history =
 					((await ctx.broker.cacher?.get(`${ctx.params.uid}.h`)) as InquirerHistory[]) ??
 					([] as InquirerHistory[]);
 
+				// If history is too long, clear it
+				if (history.length > 3) {
+					history.splice(1);
+				}
+
 				// Convert history to YouChat format
-				let ycHistory = history.map((h) => ({
+				const ycHistory = history.map((h) => ({
 					question: h.q.norm[0],
 					answer: h.a.orig[0],
 				}));
 
 				const ycHistoryStr = JSON.stringify(ycHistory);
-
-				// If history is too long, clear it
-				if (ycHistoryStr.length > 4000) {
-					history = [];
-					ycHistory = [];
-				}
 
 				if (ctx.params.needTranslate) {
 					// Translating question to English
@@ -71,10 +75,14 @@ const InquirerService: ServiceSchema<void> = {
 					});
 
 					// Asking question
-					ycAPIResponse = await ctx.call("Chrome.execute", {
-						q: qEnglish.text,
-						history: ycHistoryStr,
-					});
+					ycAPIResponse = await ctx.call<YouChatAPIResponse, ActionExecuteParams>(
+						"Chrome.execute",
+						{
+							q: qEnglish.text,
+							history: ycHistoryStr,
+							chatId: ctx.params.chatId,
+						},
+					);
 
 					const { appData } = ycAPIResponse;
 					this.logger.info(appData);
@@ -82,11 +90,21 @@ const InquirerService: ServiceSchema<void> = {
 					if (appData) {
 						const weatherAppData = appData.find(
 							(appP) => appP.ydcAppName === "weather",
-						);
+						) as WeatherAppRoot;
+						const wikipediaAppData = appData.find(
+							(appP) => appP.ydcAppName === "wikipedia",
+						) as WikipediaAppRoot;
 						if (weatherAppData) {
 							ycAPIResponse.text = weatherAppApply(weatherAppData);
 							this.logger.info(
 								"[inquirerService] weather appData",
+								ycAPIResponse.text,
+							);
+						}
+						if (wikipediaAppData) {
+							ycAPIResponse.text = wikipediaAppApply(wikipediaAppData);
+							this.logger.info(
+								"[inquirerService] wikipedia appData",
 								ycAPIResponse.text,
 							);
 						}
@@ -116,7 +134,8 @@ const InquirerService: ServiceSchema<void> = {
 					// Asking question
 					ycAPIResponse = await ctx.call("Chrome.execute", {
 						q: ctx.params.q,
-						history: [],
+						history: ycHistoryStr,
+						chatId: ctx.params.chatId,
 					});
 
 					text = clearAnswerText(ycAPIResponse.text);
@@ -159,20 +178,13 @@ const InquirerService: ServiceSchema<void> = {
 				this.logger.info("exec alice tts", ctx.params);
 
 				// Get history from cache
-				let history =
+				const history =
 					((await ctx.broker.cacher?.get(`${ctx.params.uid}.h`)) as InquirerHistory[]) ??
 					([] as InquirerHistory[]);
 
-				// Convert history to YouChat format
-				let ycHistory = history.map((h) => ({
-					question: h.q.norm[0],
-					answer: h.a.norm[0],
-				}));
-
 				// If history is too long, clear it
-				if (JSON.stringify(ycHistory).length > 4000) {
-					history = [];
-					ycHistory = [];
+				if (history.length > 3) {
+					history.splice(1);
 				}
 
 				try {

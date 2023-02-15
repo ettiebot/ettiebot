@@ -204,5 +204,6 @@ export interface Headline {
 }
 
 export default function weatherAppApply(data: WeatherAppRoot): string {
-	return `is a weather lols`;
+	const today = data.data[0].hourlyData;
+	return `Weather in "${data.data[0].locationName}" for today is...`;
 }
