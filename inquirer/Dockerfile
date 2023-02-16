@@ -23,8 +23,6 @@ COPY . .
 ARG PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
-RUN npm i ya-alice-client -S
-
 RUN npm run build
 
 RUN chmod -R o+rwx node_modules/puppeteer/

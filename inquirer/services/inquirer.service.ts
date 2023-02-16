@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable no-void */
 import type { Context, Service, ServiceSchema } from "moleculer";
-import AliceClient from "ya-alice-client";
-import type { IAliceActiveRequest } from "ya-alice-client";
 import type { WeatherAppRoot } from "../logic/apps/weatherApp.apps";
 import weatherAppApply from "../logic/apps/weatherApp.apps";
 import type { WikipediaAppRoot } from "../logic/apps/wikipediaApp.apps";
 import wikipediaAppApply from "../logic/apps/wikipediaApp.apps";
+import type { IAliceActiveRequest } from "../packages/alice";
+import { AliceClient } from "../packages/alice";
 import type {
 	InquirerActionAliceExecuteParams,
 	InquirerActionAliceResponse,
@@ -15,7 +15,6 @@ import type {
 	InquirerActionResponse,
 	InquirerHistory,
 } from "../typings/Inquirer.typings";
-import type { UserLanguage } from "../typings/Language.typings";
 import { YandexLanguageEnum } from "../typings/Language.typings";
 import type { TranslateResponse } from "../typings/Translate.typings";
 import type { YouChatAPIResponse } from "../typings/YouChatLogic.typings";
