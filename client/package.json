@@ -51,8 +51,7 @@
     "moleculer": "^0.14.27",
     "msgpack5": "^6.0.2",
     "node-telegram-bot-api": "^0.61.0",
-    "p-queue": "6.6.2",
-    "ya-alice-client": "^1.0.11"
+    "p-queue": "6.6.2"
   },
   "engines": {
     "node": ">= 16.x.x"

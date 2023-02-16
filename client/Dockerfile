@@ -19,10 +19,8 @@ COPY package*.json ./
 
 COPY .env ./
 
-RUN cd /opt/app/inquirer
-RUN yarn
-
 RUN cd /opt/app/client
+
 RUN yarn
 
 RUN npm run build

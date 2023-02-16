@@ -1,4 +1,4 @@
-import type { IAliceActiveRequest } from "ya-alice-client";
+import type { IAliceActiveRequest } from "./Alice.typings";
 import type { UserLanguage } from "./Language.typings";
 import type { Search, ThirdPartySearchResult } from "./YouChatLogic.typings";
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable no-void */
 import type { Context, Service, ServiceSchema } from "moleculer";
@@ -68,9 +69,7 @@ const InquirerService: ServiceSchema<void> = {
 					// Translating question to English
 					const qEnglish: TranslateResponse = await ctx.call("Translate.execute", {
 						text: ctx.params.q,
-						from: ctx.params.lang
-							? YandexLanguageEnum[ctx.params.lang as UserLanguage]
-							: "auto",
+						from: ctx.params.lang ? YandexLanguageEnum[ctx.params.lang] : "auto",
 						to: "en",
 					});
 
