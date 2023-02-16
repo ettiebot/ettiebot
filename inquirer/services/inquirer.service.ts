@@ -2,7 +2,7 @@
 /* eslint-disable no-void */
 import type { Context, Service, ServiceSchema } from "moleculer";
 import AliceClient from "ya-alice-client";
-import type { IAliceActiveRequest } from "ya-alice-client/src/types";
+import type { IAliceActiveRequest } from "ya-alice-client";
 import type { WeatherAppRoot } from "../logic/apps/weatherApp.apps";
 import weatherAppApply from "../logic/apps/weatherApp.apps";
 import type { WikipediaAppRoot } from "../logic/apps/wikipediaApp.apps";

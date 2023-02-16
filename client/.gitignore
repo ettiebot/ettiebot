@@ -65,6 +65,3 @@ dist/
 
 # Google Cloud credentials
 gcCredentials.json
-
-# Yarn lock file
-yarn.lock

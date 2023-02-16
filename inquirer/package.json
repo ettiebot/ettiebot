@@ -2,7 +2,7 @@
   "name": "ettie-inquirer",
   "version": "1.0.0",
   "scripts": {
-    "build": "npm i ya-alice-client && tsc --project tsconfig.build.json",
+    "build": "tsc --project tsconfig.build.json",
     "dev": "ts-node ./node_modules/moleculer/bin/moleculer-runner.js --config moleculer.config.ts --hot --repl services/**/*.service.ts --env",
     "start": "moleculer-runner --config dist/moleculer.config.js --repl dist/services/**/*.service.js --env"
   },
@@ -42,7 +42,7 @@
     "puppeteer": "^19.6.3",
     "query-string": "7.1.3",
     "xpath": "^0.0.32",
-    "ya-alice-client": "^1.0.9"
+    "ya-alice-client": "^1.0.11"
   },
   "engines": {
     "node": ">= 16.x.x"

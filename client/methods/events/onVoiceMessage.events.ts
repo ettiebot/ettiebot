@@ -5,7 +5,6 @@ import type {
 import axios from "axios";
 import i18next from "i18next";
 import type TelegramBot from "node-telegram-bot-api";
-import type { IAliceActiveRequest } from "ya-alice-client/src/types";
 import { ClientError, errorToText } from "../../errors";
 import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
 import type { InquirerExecuteTTSPayload } from "../../typings/Inquirer.typings";
