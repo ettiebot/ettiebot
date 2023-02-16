@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
+import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
 import type {
 	InquirerActionAliceExecuteParams,
 	InquirerActionAliceResponse,
 	InquirerActionExecuteParams,
 	InquirerActionResponse,
-} from "@inquirer/typings/Inquirer.typings";
-import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
+} from "../../typings/Inquirer/Inquirer.typings";
 import type { InquirerJobPayload } from "../../typings/Inquirer.typings";
 import type { User } from "../../typings/User.typings";
 

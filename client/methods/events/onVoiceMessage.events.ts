@@ -1,12 +1,12 @@
-import type {
-	InquirerActionAliceResponse,
-	InquirerActionResponse,
-} from "@inquirer/typings/Inquirer.typings";
 import axios from "axios";
 import i18next from "i18next";
 import type TelegramBot from "node-telegram-bot-api";
 import { ClientError, errorToText } from "../../errors";
 import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
+import type {
+	InquirerActionAliceResponse,
+	InquirerActionResponse,
+} from "../../typings/Inquirer/Inquirer.typings";
 import type { InquirerExecuteTTSPayload } from "../../typings/Inquirer.typings";
 import { LanguageEnum } from "../../typings/Language.typings";
 import type { User } from "../../typings/User.typings";

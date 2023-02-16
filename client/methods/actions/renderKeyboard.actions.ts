@@ -1,6 +1,6 @@
-import type { InquirerActionResponse } from "@inquirer/typings/Inquirer.typings";
 import i18next from "i18next";
 import type TelegramBot from "node-telegram-bot-api";
+import type { InquirerActionResponse } from "../../typings/Inquirer/Inquirer.typings";
 import type { User } from "../../typings/User.typings";
 
 export default function renderKeyboard(

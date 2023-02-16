@@ -12,7 +12,7 @@ RUN apt install ./google-chrome-stable_current_amd64.deb -y
 
 WORKDIR /opt/app
 
-COPY package*.json ./
+COPY package.json ./
 
 COPY .env ./
 

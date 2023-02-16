@@ -1,7 +1,7 @@
-import type { InquirerHistory } from "@inquirer/typings/Inquirer.typings";
 import i18next from "i18next";
 import type TelegramBot from "node-telegram-bot-api";
 import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
+import type { InquirerHistory } from "../../typings/Inquirer/Inquirer.typings";
 import type { User, UserProviders } from "../../typings/User.typings";
 import { ProvidersName } from "../../typings/User.typings";
 import renderKeyboard from "../actions/renderKeyboard.actions";

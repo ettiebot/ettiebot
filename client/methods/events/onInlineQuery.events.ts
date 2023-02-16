@@ -1,10 +1,10 @@
-import type { InquirerActionResponse } from "@inquirer/typings/Inquirer.typings";
 import i18next from "i18next";
 import type { InlineQueryResultArticle } from "node-telegram-bot-api";
 import type TelegramBot from "node-telegram-bot-api";
 import type { ClientError } from "../../errors";
 import { errorToText } from "../../errors";
 import type { TelegramBotThis } from "../../services/bots/telegram.bot.service";
+import type { InquirerActionResponse } from "../../typings/Inquirer/Inquirer.typings";
 import type { User } from "../../typings/User.typings";
 import clearMessageText from "../../utils/clearMessageText.utils";
 import { doRateLimiter } from "../actions";

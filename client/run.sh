@@ -1,2 +1,2 @@
-cd /opt/app/client
+cd /opt/app
 npm run start
