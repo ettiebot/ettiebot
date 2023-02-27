@@ -27,3 +27,11 @@ build/
 
 # Misc
 .DS_Store
+
+# Config
+config/production
+
+node_modules/*
+
+# Google Cloud credentials
+config/*/gc.credentials.json
