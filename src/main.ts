@@ -15,6 +15,5 @@ switch (process.env.NODE_TYPE) {
     new Inquirer();
     break;
   default:
-    console.error('NODE_TYPE is not set or is invalid.');
+    console.error('NODE_TYPE is not set or is invalid');
 }
-//
