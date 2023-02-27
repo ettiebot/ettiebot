@@ -17,3 +17,4 @@ switch (process.env.NODE_TYPE) {
   default:
     console.error('NODE_TYPE is not set or is invalid.');
 }
+//
