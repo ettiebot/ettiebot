@@ -1,0 +1,7 @@
+/**/*.js
+__tests__/*.test.ts
+build/*
+node_modules/*
+node_modules
+node_modules/puppeteer
+src/inquirer/packages/translator

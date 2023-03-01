@@ -1,0 +1,6 @@
+{
+  "port": 3000,
+  "redisConfig": "redis://localhost:6379",
+  "mongoConfig": "mongodb://localhost:27017",
+  "mongoDb": "ettie"
+}

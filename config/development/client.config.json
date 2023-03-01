@@ -1,0 +1,4 @@
+{
+  "tgToken": "test",
+  "redisConfig": "redis://localhost:6379"
+}
