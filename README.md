@@ -5,7 +5,7 @@
 </br>
 </br>
 
-## Ettie - Smart GPT-3 chatbot
+## Ettie - Smart personal assistant on the GPT-3
 Written using **Puppeteer** and **Google Cloud**.
 
 Uses [YouChat](https://you.com) AI
