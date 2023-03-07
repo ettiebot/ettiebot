@@ -78,7 +78,8 @@ export class WSClient {
     conn: IConnection,
     user: User,
   ) {
-    const userLang = user.appSettings?.lang?.split('-')[0] ?? 'en';
+    const userLang = user.appSettings.lang ?? 'en';
+    console.log(userLang);
 
     const response: Partial<InquirerReqResponse> = {
       result: null,
