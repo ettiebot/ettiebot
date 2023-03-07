@@ -5,19 +5,16 @@
 </br>
 </br>
 
-## Ettie - Smart personal assistant on the GPT-3
-Written using **Puppeteer** and **Google Cloud**.
+## Ettie - Smart personal assistant on GPT-3
 
-Uses [YouChat](https://you.com) AI
+Uses [YouChat](https://you.com) AI and [ChatAPI](https://github.com/ettiebot/chatapi)
 
 Divided into parts:
-- **inquirer** (a browser that asks a question and gives an answer)
-- clients
-  - **http** (HTTP client)
   - **ws** (WebSockets client for [Ettie Desktop](https://github.com/ettiebot/desktop))
-  - **client** (Telegram bot) **unready yet**
+  - soon: telegram bot
+
 ## Installation
-- Make sure you have **Redis** and **Docker** installed
+- Make sure you have **Docker** installed
 - Store config files in `config/production` directory like in `config/development` folder
 - Create an account at [Google Cloud](https://cloud.google.com), **enable Speech Recognition API**, **Translate API** and **Dialogflow**, create a key, and upload the key as a JSON file called `gc.credentials.json` to `config/production`
 - Run ``docker-compose up -d`` for running application as Docker containers
