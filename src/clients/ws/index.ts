@@ -99,7 +99,10 @@ export class WSClient {
 
         // Translate question
         console.time('translatePayload');
-        const payloadEng = await translateGT(text, 'en', userLang);
+        const payloadEng =
+          userLang !== 'en'
+            ? await translateGT(text, 'en', userLang)
+            : { text };
         console.timeEnd('translatePayload');
 
         // Checkout commands
@@ -133,11 +136,14 @@ export class WSClient {
         } else {
           // Translate response
           console.time('translateResponse');
-          const payloadSrc = await translateGT(
-            beautifyResponseText(response.result.text),
-            userLang,
-            'en',
-          );
+          const payloadSrc =
+            userLang !== 'en'
+              ? await translateGT(
+                  beautifyResponseText(response.result.text),
+                  userLang,
+                  'en',
+                )
+              : { text: beautifyResponseText(response.result.text) };
           console.timeEnd('translateResponse');
           response.result.text = payloadSrc.text;
 
