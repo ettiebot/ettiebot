@@ -1,18 +1,8 @@
 version: '3'
 services:
-  inq:
-    build:
-      context: .
-      dockerfile: ./docker/inq.Dockerfile
   ws:
     build:
       context: .
       dockerfile: ./docker/ws.Dockerfile
     ports:
       - "3001:3001"
-  http:
-    build:
-      context: .
-      dockerfile: ./docker/http.Dockerfile
-    ports:
-      - "3000:3000"

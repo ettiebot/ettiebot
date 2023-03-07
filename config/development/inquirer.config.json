@@ -1,4 +1,0 @@
-{
-  "redisConfig": "redis://localhost:6379",
-  "appName": "ettie"
-}

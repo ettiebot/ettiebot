@@ -5,32 +5,41 @@ import {
   connection as IConnection,
 } from 'websocket';
 import http from 'http';
-import config, { Config } from './modules/config.js';
+import config from './modules/config.js';
 import initMongo, { DB } from '../../shared/database/index.js';
-import { speechToText } from '../../shared/modules/gstt.js';
 import UserService from '../../shared/database/services/user.js';
 import { User } from '../../shared/ts/mongo.js';
-import InquirerClient from '../../shared/classes/inquirerClient.js';
+import { speechToText } from '../../shared/modules/gstt.js';
+import axios from 'axios';
+import stringToUUID from '../../shared/utils/stringToUUID.js';
+import { YouChatResponse } from '../../shared/ts/youchat.js';
+import beautifyRequestText from '../../inquirer/utils/beautifyRequestText.js';
+import { InquirerReqResponse } from '../../shared/ts/req.js';
+import { translateGT } from '../../shared/modules/gt.js';
+import parseCommand from '../../shared/modules/parse-cmd.js';
+import beautifyResponseText from '../../inquirer/utils/beautifyResponseText.js';
+import { AliceClient } from '../../shared/packages/index.js';
 
-export class WSClient extends InquirerClient {
-  private c: Config;
+export class WSClient {
+  private c = config();
   private db: DB;
   private http = http.createServer();
+  private alice = new AliceClient({
+    log: true,
+  });
   private server = new WebSocketServer({
     httpServer: this.http,
     autoAcceptConnections: false,
   });
 
   constructor() {
-    const c = config();
-    super(c.redisConfig, false);
-    this.c = c;
     void this.start();
   }
 
   private async start() {
     this.db = await initMongo(this.c.mongoConfig, this.c.mongoDb);
     this.handleConnection();
+    this.alice.connect();
     await this.startServer();
   }
 
@@ -59,21 +68,8 @@ export class WSClient extends InquirerClient {
   }
 
   private onMessage(message: IMessage, conn: IConnection, user: User) {
-    if (message.type === 'utf8') {
-      const payload = JSON.parse(message.utf8Data);
-      this.handleMessage(payload, conn, user);
-    } else if (message.type === 'binary') {
+    if (message.type === 'binary') {
       this.handleVoiceBuffer(message.binaryData, conn, user);
-    }
-  }
-
-  private handleMessage(payload: [string, any], conn: IConnection, user: User) {
-    const eventName = payload[0];
-    const eventData = payload[1];
-    void eventData, conn, user;
-    switch (eventName) {
-      default:
-        break;
     }
   }
 
@@ -82,33 +78,85 @@ export class WSClient extends InquirerClient {
     conn: IConnection,
     user: User,
   ) {
-    void conn;
+    const userLang = user.appSettings?.lang?.split('-')[0] ?? 'en';
+
+    const response: Partial<InquirerReqResponse> = {
+      result: null,
+    };
 
     try {
       if (buffer.byteLength > 8000 && buffer.byteLength < 200 * 1000) {
+        // STT
         console.time('speechToText');
-        // Speech to text
-        const text = await speechToText(
-          this.c.googleBucketName,
-          buffer,
-          user.appSettings.lang,
+        const text = beautifyRequestText(
+          await speechToText(
+            this.c.googleBucketName,
+            buffer,
+            user.appSettings.lang,
+          ),
         );
         console.timeEnd('speechToText');
 
+        // Translate question
+        console.time('translatePayload');
+        const payloadEng = await translateGT(text, 'en', userLang);
+        console.timeEnd('translatePayload');
+
+        // Checkout commands
+        const cmds = await parseCommand(payloadEng.text);
+        if (cmds && !cmds.fetch) {
+          response.cmds = cmds;
+          return conn.sendUTF(JSON.stringify(['cmd', cmds]));
+        }
+
+        // Request
         console.time('getYCResult');
-        const result = await this.getYCResult({
-          text,
-          user,
-          opts: {
-            ttsEnabled: user.appSettings?.tts?.enabled,
-            ttsVoice: user.appSettings?.tts?.voice,
-          },
-        });
+        response.result = (
+          await axios.get<{ result: YouChatResponse }>(
+            `${this.c.chatAPIURL}/query`,
+            {
+              params: {
+                text: payloadEng.text,
+                chatId: stringToUUID(user._id.toString()),
+                getParam: cmds && cmds.fetch ? 'youChatSerpResults' : null,
+              },
+              headers: {
+                'x-token': this.c.chatAPIKey,
+              },
+            },
+          )
+        ).data.result;
         console.timeEnd('getYCResult');
 
-        if (!result.result && result.cmds)
-          conn.sendUTF(JSON.stringify(['cmd', result.cmds]));
-        else conn.sendUTF(JSON.stringify(['voicing_payload', result]));
+        if (cmds && cmds.fetch) {
+          response.cmds = cmds;
+        } else {
+          // Translate response
+          console.time('translateResponse');
+          const payloadSrc = await translateGT(
+            beautifyResponseText(response.result.text),
+            userLang,
+            'en',
+          );
+          console.timeEnd('translateResponse');
+          response.result.text = payloadSrc.text;
+
+          // TTS
+          if (!user.appSettings?.tts || user.appSettings?.tts?.enabled) {
+            console.time('voice');
+            this.alice
+              .tts(payloadSrc.text, {
+                voice: user.appSettings?.tts?.voice ?? 'shitova.us',
+              })
+              .then(({ audioData }) => {
+                conn.sendBytes(audioData);
+                console.timeEnd('voice');
+              });
+          }
+        }
+
+        // Send response
+        conn.sendUTF(JSON.stringify(['response', response]));
       } else {
         throw 'no_results';
       }

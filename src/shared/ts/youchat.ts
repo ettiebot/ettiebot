@@ -1,6 +1,4 @@
 import z from 'zod';
-import { WeatherAppDatum } from './youchat/weather.js';
-import { WikipediaAppDatum } from './youchat/wikipedia.js';
 
 export interface YouChatResponse {
   '0': string;
@@ -12,7 +10,7 @@ export interface YouChatResponse {
   query: string;
   exactAbTestSlices: ExactAbTestSlices;
   ydcAppName: string;
-  data: (WikipediaAppDatum | WeatherAppDatum)[];
+  data: any[];
   isFinal: boolean;
   timedOut: boolean;
   latency: number;
