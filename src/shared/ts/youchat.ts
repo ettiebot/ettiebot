@@ -10,7 +10,7 @@ export interface YouChatResponse {
   query: string;
   exactAbTestSlices: ExactAbTestSlices;
   ydcAppName: string;
-  data: any[];
+  data: any;
   isFinal: boolean;
   timedOut: boolean;
   latency: number;

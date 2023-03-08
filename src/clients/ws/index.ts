@@ -79,50 +79,86 @@ export class WSClient {
     user: User,
   ) {
     const userLang = user.appSettings.lang ?? 'en';
-    console.log(userLang);
+
+    const payload = {
+      text: null,
+      command: null,
+      query: {
+        eng: null,
+        src: null,
+      },
+    };
 
     const response: Partial<InquirerReqResponse> = {
       result: null,
     };
 
     try {
-      if (buffer.byteLength > 8000 && buffer.byteLength < 200 * 1000) {
-        // STT
-        console.time('speechToText');
-        const text = beautifyRequestText(
-          await speechToText(
-            this.c.googleBucketName,
-            buffer,
-            user.appSettings.lang,
-          ),
-        );
-        console.timeEnd('speechToText');
+      if (buffer.byteLength < 8000 || buffer.byteLength > 200 * 1000)
+        throw 'no_results';
 
-        // Translate question
-        console.time('translatePayload');
-        const payloadEng =
-          userLang !== 'en'
-            ? await translateGT(text, 'en', userLang)
-            : { text };
-        console.timeEnd('translatePayload');
+      // STT
+      payload.text = beautifyRequestText(
+        await speechToText(
+          this.c.googleBucketName,
+          buffer,
+          user.appSettings.lang,
+        ),
+      );
 
-        // Checkout commands
-        const cmds = await parseCommand(payloadEng.text);
-        if (cmds && !cmds.fetch) {
-          response.cmds = cmds;
-          return conn.sendUTF(JSON.stringify(['cmd', cmds]));
+      // Translate question
+      if (userLang !== 'en') {
+        payload.query.eng = await translateGT(payload.text, 'en', userLang);
+      } else {
+        payload.query.eng = {
+          text: payload.text,
+          from: 'en',
+          to: 'en',
+        };
+      }
+
+      // Fetch commands in text
+      try {
+        payload.command = await parseCommand(payload.query.eng.text);
+        console.log(payload.command);
+      } catch (_) {
+        //
+      }
+
+      if (payload.command?.intentName === 'findInApp') {
+        const appName = payload.command.parameters.appName?.stringValue;
+        const searchQuery = payload.command.parameters.searchQuery?.stringValue;
+
+        if (appName && searchQuery) {
+          response.result = (
+            await axios.get<{ result: YouChatResponse }>(
+              `${this.c.chatAPIURL}/appData`,
+              {
+                params: {
+                  text: searchQuery,
+                  appName,
+                },
+                headers: {
+                  'x-token': this.c.chatAPIKey,
+                },
+              },
+            )
+          ).data.result;
         }
+      }
 
+      if (
+        payload.command?.parameters?.needData?.stringValue !== 'false' &&
+        !response.result
+      ) {
         // Request
-        console.time('getYCResult');
         response.result = (
           await axios.get<{ result: YouChatResponse }>(
             `${this.c.chatAPIURL}/query`,
             {
               params: {
-                text: payloadEng.text,
+                text: payload.query.eng.text,
                 chatId: stringToUUID(user._id.toString()),
-                getParam: cmds && cmds.fetch ? 'youChatSerpResults' : null,
               },
               headers: {
                 'x-token': this.c.chatAPIKey,
@@ -130,50 +166,55 @@ export class WSClient {
             },
           )
         ).data.result;
-        console.timeEnd('getYCResult');
+      }
 
-        if (cmds && cmds.fetch) {
-          response.cmds = cmds;
+      // Translate response
+      if (!payload.command) {
+        if (userLang !== 'en') {
+          payload.query.src = await translateGT(
+            beautifyResponseText(response.result.text),
+            userLang,
+            'en',
+          );
         } else {
-          // Translate response
-          console.time('translateResponse');
-          const payloadSrc =
-            userLang !== 'en'
-              ? await translateGT(
-                  beautifyResponseText(response.result.text),
-                  userLang,
-                  'en',
-                )
-              : { text: beautifyResponseText(response.result.text) };
-          console.timeEnd('translateResponse');
-          response.result.text = payloadSrc.text;
+          payload.query.src = {
+            text: beautifyResponseText(response.result.text),
+            from: 'en',
+            to: 'en',
+          };
+        }
 
-          // TTS
-          if (!user.appSettings?.tts || user.appSettings?.tts?.enabled) {
-            console.time('voice');
-            this.alice
-              .tts(payloadSrc.text, {
-                voice: user.appSettings?.tts?.voice ?? 'shitova.us',
-              })
-              .then(({ audioData }) => {
-                conn.sendBytes(audioData);
-                console.timeEnd('voice');
-              });
-          }
+        response.result.text = payload.query.src.text;
+
+        // TTS
+        if (!user.appSettings?.tts || user.appSettings?.tts?.enabled) {
+          this.alice
+            .tts(payload.query.src.text, {
+              voice: user.appSettings?.tts?.voice ?? 'shitova.us',
+            })
+            .then(({ audioData }) => {
+              conn.sendBytes(audioData);
+            });
         }
 
         // Send response
         conn.sendUTF(JSON.stringify(['response', response]));
       } else {
-        throw 'no_results';
+        // Send response
+        conn.sendUTF(
+          JSON.stringify([
+            'cmd',
+            { ...payload.command, ...(response.result ?? {}) },
+          ]),
+        );
       }
-    } catch (errCode) {
-      if (typeof errCode === 'string') {
-        conn.sendUTF(JSON.stringify(['error', errCode]));
+    } catch (err) {
+      if (typeof err === 'string') {
+        conn.sendUTF(JSON.stringify(['error', err]));
       } else {
-        console.error(errCode);
         conn.sendUTF(JSON.stringify(['error', 'unknown']));
       }
+      console.error(err);
     }
   }
 
