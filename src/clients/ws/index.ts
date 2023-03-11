@@ -184,6 +184,7 @@ export class WSClient {
           };
         }
 
+        response.result.query = payload.text;
         response.result.text = payload.query.src.text;
 
         // TTS
