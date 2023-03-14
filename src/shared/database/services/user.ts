@@ -4,30 +4,10 @@ import Token from './token.js';
 type Opts = { lang?: string; useTranslate?: boolean; useHistory?: boolean };
 
 export default class UserService {
-  static async getByToken(cols: DB, token: string, opts: Opts = {}) {
-    try {
-      const tokenObj = await Token.getByToken(cols, token);
-      if (!tokenObj) {
-        const userObj = await this.createUser(cols, opts);
-        await Token.createToken(cols, userObj._id, token);
-        return userObj;
-      } else {
-        // await cols.users.updateOne(
-        //   { _id: tokenObj.userId },
-        //   {
-        //     $set: {
-        //       'appSettings.lang': opts.lang,
-        //       'appSettings.historyEnabled': opts.useHistory ?? true,
-        //       'appSettings.translateEnabled': opts.useTranslate ?? true,
-        //     },
-        //   },
-        // );
-        return await cols.users.findOne({ _id: tokenObj.userId });
-      }
-    } catch (e) {
-      console.error(e);
-      return null;
-    }
+  static async getByToken(cols: DB, token: string) {
+    const tokenObj = await Token.getByToken(cols, token);
+    if (!tokenObj) return null;
+    return await cols.users.findOne({ _id: tokenObj.userId });
   }
 
   static async createUser(cols: DB, opts: Opts = {}) {

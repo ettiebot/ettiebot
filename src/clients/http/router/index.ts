@@ -1,4 +1,6 @@
 import beautifyRequestText from '../../../inquirer/utils/beautifyRequestText.js';
+import TokenService from '../../../shared/database/services/token.js';
+import UserService from '../../../shared/database/services/user.js';
 import capiReq from '../../../shared/modules/chatapi.js';
 import { speechToText } from '../../../shared/modules/gstt.js';
 import parseCommand from '../../../shared/modules/parse-cmd.js';
@@ -18,6 +20,42 @@ export default function (this: HTTPClient) {
 
   this.router.route<{ Headers: IHeaders }>({
     method: 'POST',
+    url: '/api/memorize',
+    schema: {
+      body: {
+        type: 'object',
+        required: ['lang', 'useTranslate', 'useHistory'],
+        properties: {
+          lang: { type: 'string', description: 'Language' },
+          useTranslate: { type: 'boolean', description: 'Use translate' },
+          useHistory: { type: 'boolean', description: 'Use history' },
+        },
+      },
+      headers: {
+        type: 'object',
+        required: ['x-token'],
+        properties: {
+          'x-token': { type: 'string', description: 'API key' },
+        },
+      },
+    },
+    async handler(request) {
+      const token = request.headers['x-token'];
+
+      if (!/^[a-zA-Z0-9]{128}$/.test(token)) throw new Error('Invalid token');
+
+      const user = await UserService.getByToken(self.db, token);
+      if (!user) {
+        const user = await UserService.createUser(self.db, request.body);
+        await TokenService.createToken(self.db, user._id, token);
+        return user;
+      }
+      return { success: false };
+    },
+  });
+
+  this.router.route<{ Headers: IHeaders }>({
+    method: 'POST',
     url: '/api/voice',
     schema: {
       headers: {
@@ -31,6 +69,7 @@ export default function (this: HTTPClient) {
     preHandler: this.router.auth([verifyToken.bind(this)]),
     async handler(request) {
       const user = request.headers.user;
+
       const data = await request.file();
       const buffer = await data.toBuffer();
 

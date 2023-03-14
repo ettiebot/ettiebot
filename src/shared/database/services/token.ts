@@ -1,6 +1,6 @@
 import type { DB } from '../index.js';
 
-export default class Token {
+export default class TokenService {
   static async getByToken(cols: DB, token: string) {
     return await cols.tokens.findOne({ token });
   }
