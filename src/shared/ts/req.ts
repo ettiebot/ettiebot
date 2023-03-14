@@ -26,6 +26,6 @@ export interface YouChatReqResponse {
 
 export type InquirerReqResponse = Partial<{
   result?: Partial<YouChatResponse>;
-  voice?: Buffer;
+  voice?: string;
   cmds?: CommandsPayload;
 }>;

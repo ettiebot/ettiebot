@@ -1,8 +1,8 @@
-import { WSClient } from './clients/index.js';
+import { HTTPClient } from './clients/index.js';
 
 switch (process.env.NODE_TYPE) {
-  case 'ws':
-    new WSClient();
+  case 'http':
+    new HTTPClient();
     break;
   default:
     console.error('NODE_TYPE is not set or is invalid');

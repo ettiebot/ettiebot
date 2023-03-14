@@ -17,7 +17,7 @@ export type Config = z.infer<typeof config>;
 export default (): Config => {
   const file = JSON.parse(
     readFileSync(
-      join('config', process.env.NODE_ENV, 'ws.config.json'),
+      join('config', process.env.NODE_ENV, 'http.config.json'),
       'utf8',
     ),
   );

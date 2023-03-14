@@ -10,7 +10,7 @@
 Uses [YouChat](https://you.com) AI and [ChatAPI](https://github.com/ettiebot/chatapi)
 
 Divided into parts:
-  - **ws** (WebSockets client for [Ettie Desktop](https://github.com/ettiebot/desktop))
+  - **http** (HTTP server for [Ettie Desktop](https://github.com/ettiebot/desktop))
   - soon: telegram bot
 
 ## Installation

@@ -14,7 +14,7 @@ COPY . .
 RUN tsc -p tsconfig.release.json
 
 ENV NODE_ENV=production
-ENV NODE_TYPE=ws
+ENV NODE_TYPE=http
 
 EXPOSE 3001
 CMD [ "node", "build/src/main.js" ]

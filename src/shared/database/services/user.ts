@@ -12,16 +12,16 @@ export default class UserService {
         await Token.createToken(cols, userObj._id, token);
         return userObj;
       } else {
-        await cols.users.updateOne(
-          { _id: tokenObj.userId },
-          {
-            $set: {
-              'appSettings.lang': opts.lang,
-              'appSettings.historyEnabled': opts.useHistory ?? true,
-              'appSettings.translateEnabled': opts.useTranslate ?? true,
-            },
-          },
-        );
+        // await cols.users.updateOne(
+        //   { _id: tokenObj.userId },
+        //   {
+        //     $set: {
+        //       'appSettings.lang': opts.lang,
+        //       'appSettings.historyEnabled': opts.useHistory ?? true,
+        //       'appSettings.translateEnabled': opts.useTranslate ?? true,
+        //     },
+        //   },
+        // );
         return await cols.users.findOne({ _id: tokenObj.userId });
       }
     } catch (e) {

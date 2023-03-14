@@ -35,7 +35,7 @@ export async function speechToText(
 
     // Check what response have a results
     if (!response.results || response.results.length === 0) {
-      throw 'no_results';
+      throw new Error('Nothing to transcribe');
     }
 
     const text = response.results

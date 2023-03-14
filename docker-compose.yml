@@ -1,8 +1,8 @@
 version: '3'
 services:
-  ws:
+  http:
     build:
       context: .
-      dockerfile: ./docker/ws.Dockerfile
+      dockerfile: ./docker/http.Dockerfile
     ports:
       - "3001:3001"
